@@ -47,7 +47,7 @@ const NewLobbyDialog = ({ open, onClose }: Props) => {
         component="form"
         onSubmit={(e) => {
           e.preventDefault();
-          create.mutate(name);
+          if (!create.isPending) create.mutate(name);
         }}
       >
         <DialogContent sx={{ pt: 0 }}>

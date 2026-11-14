@@ -77,9 +77,14 @@ export const LOBBIES_QUERY_KEY = ["ldn-lobbies"] as const;
 export const lobbyPath = (lobbyId: string): string =>
   `${LOBBY_LIST_PATH}/${encodeURIComponent(lobbyId)}`;
 
-/** Websocket URL subscribed to one lobby. The endpoint may already carry a query string. */
+/**
+ * Websocket URL subscribed to one lobby. The endpoint may already carry a query
+ * string; a relative one resolves against the page, like `new WebSocket` does.
+ */
 export const lobbyWebsocketUrl = (lobbyId: string): string => {
-  const url = new URL(LDN_WEBSOCKET_ENDPOINT);
+  const url = new URL(LDN_WEBSOCKET_ENDPOINT, window.location.href);
+  if (url.protocol === "http:") url.protocol = "ws:";
+  if (url.protocol === "https:") url.protocol = "wss:";
   url.searchParams.set("lobby", lobbyId);
   return url.toString();
 };

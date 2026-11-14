@@ -25,7 +25,9 @@ const canClose = (lobby: LobbySummary) => !lobby.isDefault && !lobby.gameInProgr
 /** Lobby list at /lois-des-norms. */
 const LoisDesNormsLobbies = () => {
   const [creating, setCreating] = useState(false);
+  // Kept after the confirm closes so its text doesn't blank during the fade-out.
   const [closeCandidate, setCloseCandidate] = useState<LobbySummary | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const queryClient = useQueryClient();
   const query = useQuery({
     queryKey: LOBBIES_QUERY_KEY,
@@ -52,7 +54,7 @@ const LoisDesNormsLobbies = () => {
         </Button>
       </Stack>
       <Stack spacing={2} sx={{ maxWidth: 640, mx: "auto" }}>
-        {query.isPending && <CircularProgress />}
+        {query.isPending && <CircularProgress sx={{ alignSelf: "center" }} />}
         {query.isError && <Alert severity="error">{apiErrorMessage(query.error)}</Alert>}
         {remove.isError && (
           <Alert severity="error" onClose={() => remove.reset()}>
@@ -68,23 +70,30 @@ const LoisDesNormsLobbies = () => {
           <LobbyCard
             key={lobby.id}
             lobby={lobby}
-            onClose={canClose(lobby) ? () => setCloseCandidate(lobby) : undefined}
+            onClose={
+              canClose(lobby)
+                ? () => {
+                    setCloseCandidate(lobby);
+                    setConfirmOpen(true);
+                  }
+                : undefined
+            }
             closing={remove.isPending && remove.variables === lobby.id}
           />
         ))}
       </Stack>
       <NewLobbyDialog open={creating} onClose={() => setCreating(false)} />
       <ConfirmDialog
-        open={closeCandidate !== null}
+        open={confirmOpen}
         title="Close this lobby?"
         body={`"${closeCandidate?.name ?? ""}" will be removed and its seats freed. Anyone viewing it is told it was closed.`}
         confirmLabel="Close lobby"
         destructive
         onConfirm={() => {
           if (closeCandidate) remove.mutate(closeCandidate.id);
-          setCloseCandidate(null);
+          setConfirmOpen(false);
         }}
-        onCancel={() => setCloseCandidate(null)}
+        onCancel={() => setConfirmOpen(false)}
       />
     </Container>
   );
