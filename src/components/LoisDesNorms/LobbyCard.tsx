@@ -5,6 +5,7 @@ import { Link as RouterLink } from "react-router-dom";
 import { LobbySummary } from "../../api/loisDesNorms";
 import { lobbyPath, SEAT_COUNT } from "../../helpers/loisDesNorms";
 import Nameplate from "./Nameplate";
+import PlayMat from "./PlayMat";
 import { colors, line, radii } from "./tokens";
 
 interface Props {
@@ -41,7 +42,43 @@ export const StatusBadge = ({ lobby }: { lobby: Pick<LobbySummary, "gameInProgre
     </Box>
   );
 
-/** One table of the lobby list: name, status, the five seats, viewers, Open and Close. */
+type Seat = { id: string; name?: string | null } | undefined;
+
+/** A row of chairs along one side of the table. */
+const SeatRow = ({ seats, offset, side }: { seats: Seat[]; offset: number; side: "top" | "bottom" }) => (
+  <Box
+    component="ul"
+    sx={{
+      listStyle: "none",
+      m: 0,
+      px: 1.5,
+      display: "grid",
+      // Three chairs on the near side, two centred on the far side.
+      gridTemplateColumns: "repeat(6, minmax(0, 1fr))",
+      columnGap: 1,
+      position: "relative",
+      zIndex: 1,
+      // The discs sit right against the table's edge.
+      ...(side === "top" ? { mb: "-10px" } : { mt: "-10px" }),
+    }}
+  >
+    {seats.map((player, i) => (
+      <Box
+        component="li"
+        key={player?.id || `open-${offset + i}`}
+        sx={{ gridColumn: side === "top" ? "span 2" : `${2 + i * 2} / span 2`, minWidth: 0 }}
+      >
+        {player ? (
+          <Nameplate size="sm" name={player.name || player.id} />
+        ) : (
+          <Nameplate size="sm" empty name="Open seat" />
+        )}
+      </Box>
+    ))}
+  </Box>
+);
+
+/** One table of the lobby list: a small mat with its five seats around it, then Open and Close. */
 const LobbyCard = ({ lobby, onClose, closing }: Props) => {
   // A Go nil slice arrives as null: treat it as no one seated.
   const seated = lobby.players ?? [];
@@ -52,79 +89,37 @@ const LobbyCard = ({ lobby, onClose, closing }: Props) => {
     <Box
       component="article"
       aria-labelledby={nameId}
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 2,
-        p: { xs: 2, sm: 2.5 },
-        border: line(),
-        borderRadius: `${radii.panel}px`,
-        backgroundColor: colors.feltRaised,
-      }}
+      aria-describedby={`${nameId}-seats`}
+      sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}
     >
-      <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1.5 }}>
-        <Typography id={nameId} variant="h2" component="h2" sx={{ overflowWrap: "anywhere", minWidth: 0 }}>
-          {lobby.name}
-        </Typography>
-        <StatusBadge lobby={lobby} />
-      </Box>
-      <Box
-        component="ul"
-        aria-label={`Seats, ${seated.length} of ${SEAT_COUNT} taken`}
-        sx={{
-          listStyle: "none",
-          m: 0,
-          p: 0,
-          display: "grid",
-          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-          gap: "10px 16px",
-        }}
-      >
-        {seats.map((player, index) => (
-          <li key={player?.id || `open-${index}`}>
-            {player ? (
-              <Nameplate size="sm" name={player.name || player.id} />
-            ) : (
-              <Nameplate size="sm" empty name="Open seat" />
-            )}
-          </li>
-        ))}
-      </Box>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap", mt: "auto" }}>
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 0.75,
-            color: colors.inkSoft,
-            fontSize: "0.875rem",
-          }}
-        >
+      <span id={`${nameId}-seats`} hidden>
+        {`${seated.length} of ${SEAT_COUNT} seats taken`}
+      </span>
+      <SeatRow side="top" seats={seats.slice(0, 3)} offset={0} />
+      <PlayMat small sx={{ minHeight: 112, display: "flex", flexDirection: "column", gap: 1.25, py: 2.25 }}>
+        <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1.5 }}>
+          <Typography id={nameId} variant="h2" component="h2" sx={{ overflowWrap: "anywhere", minWidth: 0 }}>
+            {lobby.name}
+          </Typography>
+          <StatusBadge lobby={lobby} />
+        </Box>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, color: colors.inkSoft, fontSize: "0.875rem", mt: "auto" }}>
           <VisibilityOutlined aria-hidden sx={{ fontSize: 18 }} />
           <span>
             {seated.length}/{SEAT_COUNT} seated · {lobby.viewers} watching
           </span>
         </Box>
-        <Box sx={{ display: "flex", gap: 1, ml: "auto" }}>
-          {onClose && (
-            <Button
-              variant="text"
-              onClick={onClose}
-              disabled={closing}
-              aria-label={`Close ${lobby.name}`}
-            >
-              Close
-            </Button>
-          )}
-          <Button
-            variant="outlined"
-            component={RouterLink}
-            to={lobbyPath(lobby.id)}
-            aria-label={`Open ${lobby.name}`}
-          >
-            Open
+      </PlayMat>
+      <SeatRow side="bottom" seats={seats.slice(3)} offset={3} />
+      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 0.5 }}>
+        {onClose && (
+          <Button variant="text" onClick={onClose} disabled={closing} aria-label={`Close ${lobby.name}`}>
+            Close
           </Button>
-        </Box>
+        )}
+        <Button variant="outlined" component={RouterLink} to={lobbyPath(lobby.id)} aria-label={`Open ${lobby.name}`}>
+          Open
+        </Button>
       </Box>
     </Box>
   );

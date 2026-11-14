@@ -1,8 +1,9 @@
 import { Box, Button, ButtonBase, Typography } from "@mui/material";
 import FlagOutlined from "@mui/icons-material/FlagOutlined";
 import Countdown from "react-countdown";
-import { highlightAnimation, REDUCED, tumble } from "./motion";
-import { colors, focusRing, fonts, line, liftedShadow, motion, radii, restingShadow, sizes } from "./tokens";
+import Die from "./Die";
+import { highlightAnimation, REDUCED } from "./motion";
+import { colors, focusRing, line, motion, radii, sizes } from "./tokens";
 
 interface Props {
   rollCount: number;
@@ -101,60 +102,34 @@ const DieTray = (props: Props) => {
         disabled={!canRoll}
         aria-label={label}
         sx={{
+          position: "relative",
           flex: "none",
           alignSelf: "center",
           width: { xs: sizes.dieCompact, sm: sizes.die },
-          height: { xs: sizes.dieCompact, sm: sizes.die },
-          borderRadius: `${radii.die}px`,
-          "&.Mui-focusVisible, &:focus-visible": { ...focusRing, outlineOffset: 4 },
-          "& .die-body": {
-            backgroundColor: colors.amber,
-            color: colors.amberInk,
-            border: line(colors.amberEdge),
-            boxShadow: restingShadow,
-            transition: `transform ${motion.quick}ms ${motion.easeOut}, box-shadow ${motion.quick}ms`,
-          },
-          "&:hover .die-body": { transform: "translateY(-2px)", boxShadow: liftedShadow },
-          "&:active .die-body": { transform: "translateY(1px)", boxShadow: restingShadow },
-          "&.Mui-disabled .die-body": {
-            backgroundColor: "rgba(242, 169, 59, 0.12)",
-            color: colors.amber,
-            boxShadow: "none",
-            transform: "none",
-          },
+          p: 0.5,
+          borderRadius: `${radii.panel}px`,
+          "&.Mui-focusVisible, &:focus-visible": { ...focusRing, outlineOffset: 2 },
+          "& > svg": { transition: `transform ${motion.quick}ms ${motion.easeOut}` },
+          "&:hover > svg": { transform: "translateY(-2px)" },
+          "&:active > svg": { transform: "translateY(1px)" },
         }}
       >
-        <Box
-          key={rollSeq}
-          className="die-body"
-          sx={{
-            width: "100%",
-            height: "100%",
-            borderRadius: `${radii.die}px`,
-            display: "grid",
-            placeItems: "center",
-            alignContent: "center",
-            gap: 0.25,
-            animation: rollSeq > 0 ? `${tumble} ${motion.tumble}ms ${motion.easeOut} both` : "none",
-            [REDUCED]: { animation: rollSeq > 0 ? highlightAnimation : "none" },
-          }}
-        >
+        <Die value={gameInProgress ? rollCount : undefined} dim={!canRoll} rollSeq={rollSeq} />
+        {rollSeq > 0 && (
+          // Reduced motion: a short ink ring instead of the tumble.
           <Box
-            component="span"
+            key={rollSeq}
+            aria-hidden
             sx={{
-              fontFamily: fonts.display,
-              fontWeight: 750,
-              fontSize: { xs: "2.25rem", sm: "3rem" },
-              lineHeight: 1,
-              fontVariantNumeric: "tabular-nums",
+              position: "absolute",
+              inset: 0,
+              borderRadius: `${radii.panel}px`,
+              pointerEvents: "none",
+              display: "none",
+              [REDUCED]: { display: "block", animation: highlightAnimation },
             }}
-          >
-            {rollCount}
-          </Box>
-          <Box component="span" sx={{ fontSize: { xs: "0.75rem", sm: "0.8125rem" }, fontWeight: 700, letterSpacing: "0.06em" }}>
-            {label.toUpperCase()}
-          </Box>
-        </Box>
+          />
+        )}
       </ButtonBase>
 
       <Box

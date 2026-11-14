@@ -19,6 +19,9 @@ export interface PlayerInfoProperties {
   dropKey: number;
 }
 
+/** Chevron size; the name line leaves this much room for it. */
+const CHEVRON = 20;
+
 /** Text that appears with the token's flip rather than before it. */
 const revealSx = (flipKey: number, delay: number) => ({
   animation: flipKey > 0 ? `${fadeIn} ${motion.routine}ms ease-out ${delay + motion.flip / 2}ms both` : "none",
@@ -38,16 +41,18 @@ const PlayerInfo = (props: PlayerInfoProperties) => {
       sx={{
         border: line(),
         borderRadius: `${radii.panel}px`,
-        p: 1.5,
+        p: 1.25,
         minWidth: 0,
         display: "grid",
         // Same height empty, seated or rolled: the mat never reflows on a roll.
         height: { xs: sizes.seatHeightCompact, sm: sizes.seatHeight },
         columnGap: 1.5,
+        rowGap: { xs: 0.5, sm: 0 },
         gridTemplateColumns: { xs: `${sizes.tokenCompact}px minmax(0, 1fr)`, sm: "minmax(0, 1fr)" },
-        gridTemplateRows: { xs: "auto auto 1fr", sm: "26px 1fr 26px auto" },
+        gridTemplateRows: { xs: "22px auto 1fr", sm: "26px 1fr 26px auto" },
+        // Seat number and role chip share the top corners at every width.
         gridTemplateAreas: {
-          xs: '"token label" "token champ" "token pick"',
+          xs: '"label label" "token champ" "token pick"',
           sm: '"label" "token" "champ" "pick"',
         },
         alignItems: "center",
@@ -105,7 +110,7 @@ const PlayerInfo = (props: PlayerInfoProperties) => {
         {rolled ? champion.name : "\u00a0"}
       </Typography>
 
-      <Box sx={{ gridArea: "pick", minWidth: 0, borderTop: { sm: line(colors.inkRule) }, pt: { sm: 1 }, mx: { sm: -0.5 } }}>
+      <Box sx={{ gridArea: "pick", minWidth: 0, borderTop: { sm: line(colors.inkRule) }, pt: { sm: 1 }, mx: -0.5 }}>
         <Select
           labelId={labelId}
           id={`seat-${index + 1}-select`}
@@ -118,24 +123,33 @@ const PlayerInfo = (props: PlayerInfoProperties) => {
           // Plain nameplate in the closed select, even while a just-moved player
           // still carries the "in <other lobby>" marker.
           renderValue={(id) => {
-            if (id === "") return <Nameplate empty name="Open seat" reserveNote />;
+            if (id === "") return <Nameplate empty name="Open seat" reserveNote reserveEnd={CHEVRON} />;
             const player = availablePlayers[id];
             const name = player?.name ?? seat.player.name ?? "—";
-            return <Nameplate name={name} note={statNote(player?.stats)} reserveNote />;
+            return (
+              <Nameplate
+                name={name}
+                initialFrom={player?.name ?? seat.player.name ?? null}
+                note={statNote(player?.stats)}
+                reserveNote
+                reserveEnd={CHEVRON}
+              />
+            );
           }}
           MenuProps={{ slotProps: { paper: { sx: { maxWidth: 360 } } } }}
           sx={{
             "& .MuiSelect-select": {
               borderRadius: `${radii.control}px`,
               py: 0.75,
-              pl: 0.75,
-              pr: "28px !important",
+              pl: 0.5,
+              // The chevron sits beside the name line only; the stat note runs under it.
+              pr: "4px !important",
               transition: `background-color ${motion.quick}ms`,
             },
             "& .MuiSelect-select:hover": { backgroundColor: colors.inkWash },
             "& .MuiSelect-select:focus": { backgroundColor: "transparent", borderRadius: `${radii.control}px` },
             "& .MuiSelect-select:focus-visible": { ...focusRing, outlineOffset: 1 },
-            "& .MuiSelect-icon": { color: colors.inkSoft, right: 2 },
+            "& .MuiSelect-icon": { color: colors.inkSoft, right: 2, top: 8, fontSize: CHEVRON },
           }}
         >
           <MenuItem value="">
@@ -150,7 +164,7 @@ const PlayerInfo = (props: PlayerInfoProperties) => {
               if (!elsewhere) {
                 return (
                   <MenuItem key={id} value={id}>
-                    <Nameplate name={name} note={stats} />
+                    <Nameplate name={name} initialFrom={player.name ?? null} note={stats} />
                   </MenuItem>
                 );
               }
@@ -160,7 +174,7 @@ const PlayerInfo = (props: PlayerInfoProperties) => {
                 <MenuItem key={id} value={id} disabled={elsewhere.gameInProgress} sx={{ whiteSpace: "normal" }}>
                   <Nameplate
                     name={`${name} — in ${elsewhere.name}`}
-                    initialFrom={name}
+                    initialFrom={player.name ?? null}
                     note={stats ? `${hint} · ${stats}` : hint}
                   />
                 </MenuItem>

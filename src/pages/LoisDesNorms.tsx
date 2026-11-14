@@ -18,6 +18,7 @@ import {
 import AdditionalInformationBlock from "../components/LoisDesNorms/AdditionalInformationBlock";
 import Lobby, { LobbySkeleton } from "../components/LoisDesNorms/Lobby";
 import FeltScene from "../components/LoisDesNorms/FeltScene";
+import PlayMat from "../components/LoisDesNorms/PlayMat";
 import { colors, visuallyHidden } from "../components/LoisDesNorms/tokens";
 
 type Message = { action: MessageActions; content: string };
@@ -141,7 +142,7 @@ const BackLink = () => (
   </Link>
 );
 
-const headlineSx = { fontSize: { xs: "2.25rem", md: "3rem" }, overflowWrap: "anywhere" } as const;
+const headlineSx = { fontSize: { xs: "2.125rem", md: "2.75rem" }, overflowWrap: "anywhere" } as const;
 
 const LoisDesNormsLobby = ({ lobbyId }: { lobbyId: string }) => {
   const [state, dispatch] = useReducer(reducer, lobbyId, initialState);
@@ -281,7 +282,7 @@ const LoisDesNormsLobby = ({ lobbyId }: { lobbyId: string }) => {
 
   const connectionBanner =
     connection.kind === "open" ? null : (
-      <Alert severity={connection.kind === "closed" ? "warning" : "info"} sx={{ mb: 3 }}>
+      <Alert severity={connection.kind === "closed" ? "warning" : "info"} sx={{ mb: 2.5 }}>
         {connection.kind === "closed"
           ? `Connection lost. Retrying in ${Math.round(connection.retryInMs / 1000)}s (attempt ${connection.attempt})…`
           : connection.attempt === 1
@@ -296,6 +297,7 @@ const LoisDesNormsLobby = ({ lobbyId }: { lobbyId: string }) => {
   return (
     <FeltScene>
       <BackLink />
+      <PlayMat sx={{ mt: 1.5 }}>
       <Box
         component="header"
         sx={{
@@ -304,9 +306,8 @@ const LoisDesNormsLobby = ({ lobbyId }: { lobbyId: string }) => {
           alignItems: "flex-end",
           justifyContent: "space-between",
           columnGap: 3,
-          rowGap: 1.5,
-          mt: 1.5,
-          mb: 3,
+          rowGap: 1,
+          mb: { xs: 2, sm: 2.5 },
         }}
       >
         {loaded ? (
@@ -356,8 +357,9 @@ const LoisDesNormsLobby = ({ lobbyId }: { lobbyId: string }) => {
       ) : (
         <LobbySkeleton />
       )}
+      </PlayMat>
       {loaded && (
-        <Box sx={{ mt: { xs: 4, md: 4 } }}>
+        <Box sx={{ mt: { xs: 3, md: 4 } }}>
           <AdditionalInformationBlock availablePlayers={state.availablePlayers} />
         </Box>
       )}

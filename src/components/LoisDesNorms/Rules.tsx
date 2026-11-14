@@ -11,7 +11,22 @@ const RULES = [
   "If a rematch is called and everyone jumps in, the rules start over again",
 ];
 
-/** The house rules as numbered articles across the panels of a folding screen. */
+/**
+ * Where each article sits on the screen from md up: the first spans both
+ * panels above the horizontal fold, then three articles per panel.
+ */
+const placement = (index: number) => {
+  if (index === 0) return { gridColumn: "1 / -1", borderBottom: line(colors.inkRule), mb: 2.5 };
+  const panel = index <= 3 ? 1 : 2;
+  const row = panel === 1 ? index + 1 : index - 2;
+  return {
+    gridColumn: panel,
+    gridRow: row,
+    ...(panel === 2 ? { borderLeft: line(colors.inkRule), pl: 5 } : { pr: 5 }),
+  };
+};
+
+/** The house rules as numbered articles on a folding screen of two panels. */
 const Rules = () => (
   <Box
     component="ol"
@@ -19,10 +34,8 @@ const Rules = () => (
       listStyle: "none",
       m: 0,
       p: 0,
-      columnCount: { xs: 1, sm: 2, md: 4 },
-      columnGap: { xs: 0, sm: 5 },
-      // The fold between two panels of the screen.
-      columnRule: line(colors.inkRule),
+      display: "grid",
+      gridTemplateColumns: { xs: "minmax(0, 1fr)", md: "repeat(2, minmax(0, 1fr))" },
     }}
   >
     {RULES.map((rule, index) => (
@@ -30,12 +43,12 @@ const Rules = () => (
         component="li"
         key={rule}
         sx={{
-          breakInside: "avoid",
           display: "grid",
           gridTemplateColumns: "2.25rem minmax(0, 1fr)",
           alignItems: "baseline",
           columnGap: 1,
           pb: 2.5,
+          "@media (min-width: 900px)": placement(index),
         }}
       >
         <Box

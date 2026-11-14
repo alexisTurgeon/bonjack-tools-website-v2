@@ -3,12 +3,12 @@ import { LeagueOfLegendsRole } from "../../helpers/loisDesNorms";
 
 /** Design tokens of the Lois des Norms pages. Their colours, radii, line and sizes all come from here. */
 export const colors = {
-  /** Page ground. */
-  felt: "#11392A",
-  /** Recessed felt: the die tray well, menus and dialogs. */
-  feltDeep: "#0B2A1F",
-  /** Raised felt: lobby tiles. */
-  feltRaised: "#164433",
+  /** Page ground: the table the mats lie on. Also the footer's ground. */
+  table: "#0A261C",
+  /** Play mat felt. */
+  felt: "#15472F",
+  /** Recessed felt: the die tray well, the rules screen, menus and dialogs. */
+  feltDeep: "#0D3224",
   /** Text and printed lines. */
   ink: "#F1F4EC",
   /** Secondary text, tinted green. */
@@ -42,7 +42,7 @@ export const roleColors: Record<LeagueOfLegendsRole, string> = {
   TOP: "#7EB6F2",
   JUNGLE: "#A9D45F",
   MID: "#C59BF5",
-  ADC: "#F28B82",
+  ADC: "#F69B93",
   SUPPORT: "#5ED6C8",
 };
 
@@ -59,8 +59,8 @@ export const radii = {
   control: 10,
   /** Badges and chips. */
   badge: 6,
-  /** The die. */
-  die: 22,
+  /** Play mats. */
+  mat: 22,
   round: 999,
 } as const;
 
@@ -77,11 +77,11 @@ export const sizes = {
   token: 112,
   tokenCompact: 72,
   seatHeight: 300,
-  seatHeightCompact: 112,
+  seatHeightCompact: 134,
   seatMinWidth: 176,
-  die: 112,
+  die: 116,
   dieCompact: 84,
-  trayWidth: 200,
+  trayWidth: 184,
   disc: 32,
   discSmall: 26,
   content: 1440,
@@ -96,12 +96,12 @@ export const motion = {
   easeOut: "cubic-bezier(0.16, 1, 0.3, 1)",
   quick: 150,
   routine: 220,
-  tumble: 560,
+  tumble: 640,
   flip: 480,
   /** Delay between two seats flipping on a roll. */
   flipStagger: 130,
   /** Delay before the first token flips, while the die tumbles. */
-  flipLead: 240,
+  flipLead: 420,
   drop: 320,
 } as const;
 

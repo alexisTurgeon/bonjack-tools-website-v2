@@ -16,11 +16,10 @@ export const dropIn = keyframes`
 
 /** Die rolling over before settling on its new face. */
 export const tumble = keyframes`
-  0% { transform: rotate(0deg) translateY(0) scale(1); }
-  25% { transform: rotate(-32deg) translateY(-10px) scale(1.05); }
-  55% { transform: rotate(18deg) translateY(0) scale(0.97); }
-  78% { transform: rotate(-6deg) scale(1.01); }
-  100% { transform: rotate(0deg) scale(1); }
+  0% { transform: translateY(-16px) rotate(-220deg) scale(0.84); }
+  55% { transform: translateY(0) rotate(14deg) scale(1.05); }
+  78% { transform: translateY(0) rotate(-5deg) scale(0.99); }
+  100% { transform: translateY(0) rotate(0deg) scale(1); }
 `;
 
 /** Text that arrives with its token. */

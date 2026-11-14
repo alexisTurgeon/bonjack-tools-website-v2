@@ -1,36 +1,43 @@
 import { ReactNode } from "react";
-import { Box } from "@mui/material";
+import { Box, GlobalStyles } from "@mui/material";
 import { ThemeProvider } from "@mui/material/styles";
+import { tableNap } from "./felt";
 import { ldnTheme } from "./theme";
-import { colors, fonts, sizes } from "./tokens";
-
-/** Fine nap of the felt: low-alpha noise drawn by an SVG filter, no image file. */
-const FELT_NAP =
-  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.95 0 0 0 0 0.96 0 0 0 0 0.93 0.05 0 0 0 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")";
+import { colors, line, sizes } from "./tokens";
 
 /**
- * Ground of the Lois des Norms pages: full-bleed felt under the site header,
- * ending above the fixed footer, with the pages' own theme.
+ * While these pages are mounted: the site's fixed footer gets the table's
+ * ground and ink text, and #root drops its footer gap (the scene keeps its
+ * own, at least the footer's height).
  */
+const footerStyles = {
+  "#root": { paddingBottom: 0 },
+  ".footer": {
+    backgroundColor: colors.table,
+    color: colors.ink,
+    borderTop: line(colors.inkRule),
+    padding: "6px 16px",
+    boxSizing: "border-box",
+  },
+  ".footer .MuiTypography-root": { color: colors.ink, fontSize: "0.875rem" },
+} as const;
+
+/** The table: full-bleed felt under the site header, with the pages' own theme. */
 const FeltScene = ({ children }: { children: ReactNode }) => (
   <ThemeProvider theme={ldnTheme}>
+    <GlobalStyles styles={footerStyles} />
     <Box
       component="main"
       sx={{
-        backgroundColor: colors.felt,
-        backgroundImage: FELT_NAP,
+        backgroundColor: colors.table,
+        ...tableNap,
         color: colors.ink,
         colorScheme: "dark",
-        fontFamily: fonts.ui,
         fontVariantNumeric: "tabular-nums",
         caretColor: colors.amber,
-        scrollbarColor: `${colors.inkLine} ${colors.feltDeep}`,
-        // Site header: 56px on phones, 64px on tablets, about 69px on desktop. Footer strip: 56px.
-        minHeight: {
-          xs: "calc(100dvh - 112px)",
-          sm: "calc(100dvh - 120px)",
-          md: "calc(100dvh - 125px)",
-        },
+        scrollbarColor: `${colors.inkLine} ${colors.table}`,
+        // Site header: 56px on phones, 64px on tablets, about 69px on desktop.
+        minHeight: { xs: "calc(100dvh - 56px)", sm: "calc(100dvh - 64px)", md: "calc(100dvh - 69px)" },
         "& *, & *::before, & *::after": { boxSizing: "border-box" },
         "& ::selection": { backgroundColor: colors.amber, color: colors.amberInk },
       }}
@@ -40,9 +47,10 @@ const FeltScene = ({ children }: { children: ReactNode }) => (
           boxSizing: "border-box",
           maxWidth: sizes.content,
           mx: "auto",
-          px: { xs: 2, sm: 3, md: 5 },
-          pt: { xs: 2.5, md: 3 },
-          pb: { xs: 5, md: 4 },
+          px: { xs: 1.5, sm: 3 },
+          pt: { xs: 2, md: 2.5 },
+          // Clear of the fixed footer (about 36px) with room to spare.
+          pb: { xs: 9, md: 8 },
         }}
       >
         {children}

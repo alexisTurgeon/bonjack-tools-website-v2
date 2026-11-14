@@ -28,19 +28,26 @@ const canClose = (lobby: LobbySummary) => !lobby.isDefault && !lobby.gameInProgr
 const gridSx = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 340px), 1fr))",
-  gap: { xs: 2, md: 3 },
+  columnGap: { xs: 2, md: 4 },
+  rowGap: { xs: 4, md: 5 },
 } as const;
 
-/** Placeholder table with the same size and lines as a real one. */
+const CHAIRS = [0, 1, 2];
+
+/** Placeholder table with the same shape as a real one. */
 const TileSkeleton = () => (
-  <Box sx={{ border: line(colors.inkRule), borderRadius: `${radii.panel}px`, p: 2.5, display: "grid", gap: 2 }}>
-    <Skeleton variant="text" width="55%" sx={{ fontSize: "1.375rem" }} />
-    <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px 16px" }}>
-      {Array.from({ length: 6 }, (_, i) => (
+  <Box sx={{ display: "grid", gap: 1.5 }}>
+    <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1, px: 1.5 }}>
+      {CHAIRS.map((i) => (
         <Skeleton key={i} variant="rounded" height={26} />
       ))}
     </Box>
-    <Skeleton variant="rounded" height={36} />
+    <Box sx={{ border: line(colors.inkRule), borderRadius: `${radii.panel + 2}px`, height: 112 }} />
+    <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1, px: 1.5 }}>
+      {CHAIRS.slice(1).map((i) => (
+        <Skeleton key={i} variant="rounded" height={26} />
+      ))}
+    </Box>
   </Box>
 );
 

@@ -1,4 +1,5 @@
-import { Box, SelectChangeEvent, Skeleton } from "@mui/material";
+import { ReactNode } from "react";
+import { Box, SelectChangeEvent, Skeleton, useMediaQuery } from "@mui/material";
 import { AvailablePlayers, Player, SEAT_COUNT } from "../../helpers/loisDesNorms";
 import DieTray from "./DieTray";
 import PlayerInfo from "./PlayerInfo";
@@ -16,7 +17,7 @@ export interface LobbyProperties {
   nextRollTimer: number;
   /** Epoch ms at which the next roll becomes available. */
   nextRollAt: number;
-  /** Full length of the current cooldown, in ms. */
+  /** Full length of the cooldown between two rolls, in ms. */
   cooldownTotalMs: number;
   /** Changes on every roll seen live. */
   rollSeq: number;
@@ -28,38 +29,39 @@ export interface LobbyProperties {
   onPlayerChange: (event: SelectChangeEvent, index: number) => void;
 }
 
-/** Five seats then the die tray; on narrow screens the tray comes first. */
+/** From this width the tray sits right of the seats; below it, above them. */
+const WIDE = "(min-width: 1280px)";
+
 const matSx = {
   display: "grid",
-  gap: { xs: 1.5, md: 2 },
+  gap: 1.5,
   gridTemplateColumns: {
     xs: "minmax(0, 1fr)",
     sm: `repeat(auto-fill, minmax(${sizes.seatMinWidth}px, 1fr))`,
   },
-  "& > .die-tray": { gridColumn: "1 / -1", gridRow: 1 },
-  "@media (min-width: 1280px)": {
+  "& > .die-tray": { gridColumn: "1 / -1" },
+  [`@media ${WIDE}`]: {
     gridTemplateColumns: `repeat(${SEAT_COUNT}, minmax(0, 1fr)) ${sizes.trayWidth}px`,
-    "& > .die-tray": { gridColumn: SEAT_COUNT + 1, gridRow: 1 },
+    "& > .die-tray": { gridColumn: "auto" },
   },
 } as const;
 
+/** Seats and tray in reading order: the DOM order follows the layout, not CSS order. */
+const MatGrid = ({ tray, seats, label }: { tray: ReactNode; seats: ReactNode; label?: string }) => {
+  const wide = useMediaQuery(WIDE, { noSsr: true });
+  return (
+    <Box sx={matSx} aria-busy={label ? "true" : undefined} aria-label={label}>
+      {!wide && <Box className="die-tray">{tray}</Box>}
+      {seats}
+      {wide && <Box className="die-tray">{tray}</Box>}
+    </Box>
+  );
+};
+
 /** The mat: five seat zones and the die tray. */
 const Lobby = (props: LobbyProperties) => (
-  <Box sx={matSx}>
-    {props.players.map((player, index) => (
-      <PlayerInfo
-        key={`seat-${index}`}
-        index={index}
-        seat={player}
-        availablePlayers={props.availablePlayers}
-        leagueVersion={props.leagueVersion}
-        onChange={props.onPlayerChange}
-        flipKey={props.rollSeq}
-        flipDelay={motion.flipLead + index * motion.flipStagger}
-        dropKey={props.seatDrops[index] ?? 0}
-      />
-    ))}
-    <Box className="die-tray">
+  <MatGrid
+    tray={
       <DieTray
         rollCount={props.rollCount}
         gameInProgress={props.gameInProgress}
@@ -72,42 +74,64 @@ const Lobby = (props: LobbyProperties) => (
         reset={props.reset}
         cancel={props.cancel}
       />
-    </Box>
+    }
+    seats={props.players.map((player, index) => (
+      <PlayerInfo
+        key={`seat-${index}`}
+        index={index}
+        seat={player}
+        availablePlayers={props.availablePlayers}
+        leagueVersion={props.leagueVersion}
+        onChange={props.onPlayerChange}
+        flipKey={props.rollSeq}
+        flipDelay={motion.flipLead + index * motion.flipStagger}
+        dropKey={props.seatDrops[index] ?? 0}
+      />
+    ))}
+  />
+);
+
+const SEAT_INDEXES = Array.from({ length: SEAT_COUNT }, (_, i) => i);
+
+const SeatSkeleton = () => (
+  <Box
+    sx={{
+      border: line(colors.inkRule),
+      borderRadius: `${radii.panel}px`,
+      height: { xs: sizes.seatHeightCompact, sm: sizes.seatHeight },
+      p: 1.5,
+      display: "grid",
+      placeItems: "center",
+    }}
+  >
+    <Skeleton
+      variant="circular"
+      sx={{
+        width: { xs: sizes.tokenCompact, sm: sizes.token },
+        height: { xs: sizes.tokenCompact, sm: sizes.token },
+      }}
+    />
   </Box>
 );
 
 /** The mat's outline while the first state is on its way. */
 export const LobbySkeleton = () => (
-  <Box sx={matSx} aria-busy="true" aria-label="Loading the table">
-    {Array.from({ length: SEAT_COUNT }, (_, i) => (
-      <Box
-        key={i}
-        sx={{
-          border: line(colors.inkRule),
-          borderRadius: `${radii.panel}px`,
-          height: { xs: sizes.seatHeightCompact, sm: sizes.seatHeight },
-          p: 1.5,
-          display: "grid",
-          placeItems: "center",
-        }}
-      >
-        <Skeleton
-          variant="circular"
-          sx={{ width: { xs: sizes.tokenCompact, sm: sizes.token }, height: { xs: sizes.tokenCompact, sm: sizes.token } }}
-        />
-      </Box>
-    ))}
-    <Box className="die-tray">
+  <MatGrid
+    label="Loading the table"
+    tray={
       <Box
         sx={{
           border: line(colors.inkRule),
           borderRadius: `${radii.panel}px`,
           height: { xs: 112, sm: 146 },
-          "@media (min-width: 1280px)": { height: sizes.seatHeight },
+          [`@media ${WIDE}`]: { height: sizes.seatHeight },
         }}
       />
-    </Box>
-  </Box>
+    }
+    seats={SEAT_INDEXES.map((i) => (
+      <SeatSkeleton key={i} />
+    ))}
+  />
 );
 
 export default Lobby;

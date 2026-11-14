@@ -4,7 +4,7 @@ import { initialOf } from "../../helpers/loisDesNorms";
 import { colors, dashedLine, fonts, sizes } from "./tokens";
 
 interface DiscProps {
-  name?: string;
+  name?: string | null;
   size?: number;
   /** An open seat: printed outline, no letter. */
   empty?: boolean;
@@ -40,23 +40,25 @@ export const InitialDisc = ({ name, size = sizes.disc, empty }: DiscProps) => (
 
 interface NameplateProps {
   name: ReactNode;
-  /** Name used for the initial when `name` is not plain text. */
-  initialFrom?: string;
+  /** Name used for the initial when `name` is not plain text; null for a player without a name. */
+  initialFrom?: string | null;
   /** One-line stat note, e.g. "12 games · 31 rolls". */
   note?: ReactNode;
   /** Keep the note line's height even without a note, so the plate never changes size. */
   reserveNote?: boolean;
   size?: "md" | "sm";
   empty?: boolean;
+  /** Room kept free at the end of the name line (px), e.g. for a select's chevron. */
+  reserveEnd?: number;
 }
 
 /** The one way a player is shown: initial disc, name, stat note. */
-const Nameplate = ({ name, initialFrom, note, reserveNote, size = "md", empty }: NameplateProps) => {
+const Nameplate = ({ name, initialFrom, note, reserveNote, size = "md", empty, reserveEnd = 0 }: NameplateProps) => {
   const small = size === "sm";
   return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: small ? 1 : 1.25, minWidth: 0 }}>
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 0 }}>
       <InitialDisc
-        name={initialFrom ?? (typeof name === "string" ? name : undefined)}
+        name={initialFrom !== undefined ? initialFrom : typeof name === "string" ? name : undefined}
         size={small ? sizes.discSmall : sizes.disc}
         empty={empty}
       />
@@ -70,6 +72,7 @@ const Nameplate = ({ name, initialFrom, note, reserveNote, size = "md", empty }:
             fontSize: small ? "0.875rem" : "0.9375rem",
             lineHeight: 1.35,
             color: empty ? colors.inkFaint : colors.ink,
+            pr: `${reserveEnd}px`,
           }}
         >
           {name}
