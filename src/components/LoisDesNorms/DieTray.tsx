@@ -78,7 +78,7 @@ const DieTray = (props: Props) => {
   return (
     <Box
       component="section"
-      aria-label="Die tray"
+      aria-label="Roll controls"
       sx={{
         border: line(),
         borderRadius: `${radii.panel}px`,
@@ -191,7 +191,7 @@ const DieTray = (props: Props) => {
               Finish
             </Button>
             <Button variant="text" onClick={props.cancel}>
-              Cancel loi
+              Cancel
             </Button>
           </Box>
         )}

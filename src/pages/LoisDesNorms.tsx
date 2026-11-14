@@ -268,8 +268,8 @@ const LoisDesNormsLobby = ({ lobbyId }: { lobbyId: string }) => {
         <Alert
           severity="warning"
           action={
-            <Button variant="outlined" component={RouterLink} to={LOBBY_LIST_PATH}>
-              See all lobbies
+            <Button variant="outlined" component={RouterLink} to={LOBBY_LIST_PATH} sx={{ whiteSpace: "nowrap" }}>
+              All lobbies
             </Button>
           }
         >
