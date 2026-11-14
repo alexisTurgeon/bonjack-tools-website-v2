@@ -1,59 +1,103 @@
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-import { useTheme } from "@mui/material/styles";
-import { useNavigate } from "react-router-dom";
-import { AvailablePlayers, winRate } from "../../helpers/loisDesNorms";
+import { Box, Link, Typography } from "@mui/material";
+import { Link as RouterLink } from "react-router-dom";
+import { AvailablePlayers, statNote, winRate } from "../../helpers/loisDesNorms";
+import Nameplate from "./Nameplate";
+import { colors, fonts, line, visuallyHidden } from "./tokens";
 
-const TEAM_ID = "team";
+const NUMBER_COLUMNS = ["Games", "Rolls", "Win rate"] as const;
 
+const cellSx = { py: 1.25, px: { xs: 0.5, sm: 1.5 }, borderBottom: line(colors.inkRule) } as const;
+const numberSx = { ...cellSx, textAlign: "right", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" } as const;
+
+const WinRate = ({ value }: { value: number }) => (
+  <Box sx={{ display: "grid", justifyItems: "end", gap: 0.5 }}>
+    <span>{value.toFixed(1)} %</span>
+    <Box aria-hidden sx={{ width: { xs: 44, sm: 64 }, height: 2, backgroundColor: colors.inkRule }}>
+      <Box sx={{ width: `${Math.min(100, value)}%`, height: "100%", backgroundColor: colors.ink }} />
+    </Box>
+  </Box>
+);
+
+/** Scoresheet of the players in the voice channel: games, rolls and win rate. */
 const Stats = (props: { availablePlayers: AvailablePlayers }) => {
-  const navigate = useNavigate();
-  const theme = useTheme();
-
-  const playerStats = Object.entries(props.availablePlayers)
+  const rows = Object.entries(props.availablePlayers)
     .filter(([, p]) => p && p.name && p.stats)
-    .map(([id, p]) => ({
-      id,
-      name: p.name,
-      numberOfGame: p.stats!.numberOfGame,
-      totalRoll: p.stats!.totalRoll,
-      winRate: winRate(p.stats),
-    }));
+    .map(([id, p]) => ({ id, name: p.name ?? "", stats: p.stats! }));
+
+  if (rows.length === 0) {
+    return (
+      <Typography sx={{ color: colors.inkSoft }}>
+        No stats yet for the players in the voice channel. They count from the first finished loi.
+      </Typography>
+    );
+  }
 
   const team = {
-    numberOfGame: playerStats.reduce((acc, s) => acc + s.numberOfGame, 0),
-    totalRoll: playerStats.reduce((acc, s) => acc + s.totalRoll, 0),
+    numberOfGame: rows.reduce((acc, r) => acc + r.stats.numberOfGame, 0),
+    totalRoll: rows.reduce((acc, r) => acc + r.stats.totalRoll, 0),
   };
-  const stats = [
-    ...playerStats,
-    { id: TEAM_ID, name: "Team", ...team, winRate: winRate(team) },
-  ];
 
   return (
-    <ResponsiveContainer width="100%" height="100%">
-      <BarChart data={stats} margin={{ top: 10, right: 30, left: 20, bottom: 5 }}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="name" />
-        <YAxis domain={[0, 100]} />
-        <Tooltip formatter={(value) => `${Number(value).toFixed(1)}%`} />
-        <Bar
-          dataKey="winRate"
-          name="Win Rate"
-          fill={theme.palette.secondary.main}
-          onClick={(data) => {
-            const id = (data as { payload?: { id?: string } }).payload?.id;
-            if (id && id !== TEAM_ID) void navigate(`/profile?id=${encodeURIComponent(id)}`);
-          }}
-        />
-      </BarChart>
-    </ResponsiveContainer>
+    <Box sx={{ overflowX: "auto" }}>
+      <Box
+        component="table"
+        sx={{ width: "100%", maxWidth: 820, borderCollapse: "collapse", tableLayout: "fixed", fontSize: "0.9375rem" }}
+      >
+        <caption style={visuallyHidden}>Player stats: games won, total rolls and win rate</caption>
+        <colgroup>
+          <col />
+          <Box component="col" sx={{ width: { xs: 52, sm: 96 } }} />
+          <Box component="col" sx={{ width: { xs: 48, sm: 96 } }} />
+          <Box component="col" sx={{ width: { xs: 72, sm: 120 } }} />
+        </colgroup>
+        <thead>
+          <tr>
+            <Box component="th" scope="col" sx={{ ...cellSx, textAlign: "left", color: colors.inkSoft, fontWeight: 600, fontSize: "0.8125rem", borderBottom: line() }}>
+              Player
+            </Box>
+            {NUMBER_COLUMNS.map((label) => (
+              <Box key={label} component="th" scope="col" sx={{ ...numberSx, color: colors.inkSoft, fontWeight: 600, fontSize: "0.8125rem", borderBottom: line() }}>
+                {label}
+              </Box>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.id}>
+              <Box component="th" scope="row" sx={{ ...cellSx, textAlign: "left", fontWeight: 400 }}>
+                <Nameplate
+                  initialFrom={row.name}
+                  name={
+                    <Link component={RouterLink} to={`/profile?id=${encodeURIComponent(row.id)}`}>
+                      {row.name}
+                    </Link>
+                  }
+                  note={statNote(row.stats)}
+                />
+              </Box>
+              <Box component="td" sx={numberSx}>{row.stats.numberOfGame}</Box>
+              <Box component="td" sx={numberSx}>{row.stats.totalRoll}</Box>
+              <Box component="td" sx={numberSx}>
+                <WinRate value={winRate(row.stats)} />
+              </Box>
+            </tr>
+          ))}
+        </tbody>
+        <tfoot>
+          <tr>
+            <Box component="th" scope="row" sx={{ ...cellSx, textAlign: "left", borderBottom: "none", fontFamily: fonts.display, fontWeight: 700, fontSize: "1.0625rem" }}>
+              Team
+            </Box>
+            <Box component="td" sx={{ ...numberSx, borderBottom: "none", fontWeight: 600 }}>{team.numberOfGame}</Box>
+            <Box component="td" sx={{ ...numberSx, borderBottom: "none", fontWeight: 600 }}>{team.totalRoll}</Box>
+            <Box component="td" sx={{ ...numberSx, borderBottom: "none", fontWeight: 600 }}>
+              <WinRate value={winRate(team)} />
+            </Box>
+          </tr>
+        </tfoot>
+      </Box>
+    </Box>
   );
 };
 

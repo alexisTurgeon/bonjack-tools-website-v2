@@ -1,13 +1,7 @@
 import { useEffect, useReducer, useRef, useCallback, useState } from "react";
-import {
-  Alert,
-  CircularProgress,
-  Container,
-  Link,
-  SelectChangeEvent,
-  Typography,
-} from "@mui/material";
-import Grid from "@mui/material/GridLegacy";
+import { Alert, Box, Button, Link, SelectChangeEvent, Skeleton, Typography } from "@mui/material";
+import ArrowBackRounded from "@mui/icons-material/ArrowBackRounded";
+import HeadsetMicOutlined from "@mui/icons-material/HeadsetMicOutlined";
 import { Link as RouterLink, useParams } from "react-router-dom";
 import {
   DEFAULT_LOBBY_ID,
@@ -21,7 +15,9 @@ import {
   SEAT_COUNT,
 } from "../helpers/loisDesNorms";
 import AdditionalInformationBlock from "../components/LoisDesNorms/AdditionalInformationBlock";
-import Lobby from "../components/LoisDesNorms/Lobby";
+import Lobby, { LobbySkeleton } from "../components/LoisDesNorms/Lobby";
+import FeltScene from "../components/LoisDesNorms/FeltScene";
+import { colors, visuallyHidden } from "../components/LoisDesNorms/tokens";
 
 type Message = { action: MessageActions; content: string };
 
@@ -30,7 +26,25 @@ const MAX_RETRY_MS = 30_000;
 /** Close code the server uses right after lobbyNotFound. */
 const LOBBY_NOT_FOUND_CLOSE_CODE = 4404;
 
-const initialState = (lobbyId: string): LoisDesNormsState => ({
+/**
+ * Production cooldown between rolls. Used as the track's full length only when
+ * the page opened during a cooldown and never saw the roll that started it.
+ */
+const ASSUMED_COOLDOWN_MS = 5 * 60_000;
+
+/** Server state plus what the page derives from how it changed. */
+interface PageState extends LoisDesNormsState {
+  /** Full length of the current cooldown: the first nextRollTimer after a roll seen live. */
+  cooldownTotalMs: number;
+  /** Bumped on every roll seen live; drives the die and the token flips. */
+  rollSeq: number;
+  /** Per seat, bumped when a player is newly seated there; drives the token drop. */
+  seatDrops: number[];
+  /** Polite announcement of the last roll. */
+  announcement: string;
+}
+
+const initialState = (lobbyId: string): PageState => ({
   lobbyId,
   lobbyName: "",
   players: Array.from({ length: SEAT_COUNT }, emptyPlayer),
@@ -45,25 +59,63 @@ const initialState = (lobbyId: string): LoisDesNormsState => ({
   discordGuildName: "",
   discordGuildChannel: "",
   leagueVersion: "",
+  cooldownTotalMs: 0,
+  rollSeq: 0,
+  seatDrops: Array.from({ length: SEAT_COUNT }, () => 0),
+  announcement: "",
 });
 
-const reducer = (state: LoisDesNormsState, message: Message): LoisDesNormsState => {
+/** Bump a seat's counter when a player newly sits there. Nothing on the first state. */
+const nextSeatDrops = (state: PageState, players: Player[], hadState: boolean): number[] =>
+  players.map((seat, i) => {
+    const before = state.seatDrops[i] ?? 0;
+    const changed = seat.player.id !== "" && seat.player.id !== state.players[i]?.player.id;
+    return hadState && changed ? before + 1 : before;
+  });
+
+const rollAnnouncement = (state: LoisDesNormsState): string => {
+  const draws = state.players
+    .filter((seat) => seat.player.id && seat.role && seat.champion)
+    .map((seat) => `${seat.player.name ?? "A player"}: ${seat.role}, ${seat.champion?.name}`);
+  return `Loi number ${state.gameId}, roll ${state.rollCount}. ${draws.join(". ")}.`;
+};
+
+const reducer = (state: PageState, message: Message): PageState => {
   switch (message.action) {
     case "updatePlayers": {
       const players = JSON.parse(message.content) as Player[];
-      return { ...state, players };
+      return { ...state, players, seatDrops: nextSeatDrops(state, players, true) };
     }
     case "updateState": {
       // Replaces the whole state, so it also reverts an optimistic updatePlayers
       // the server refused (it echoes the true state back to the sender).
       const newState = JSON.parse(message.content) as LoisDesNormsState;
-      return {
+      const hadState = state.gameId >= 0;
+      const timer = newState.nextRollTimer ?? 0;
+      // A roll seen live: a new game started, or the roll count went up.
+      const rolled =
+        hadState &&
+        newState.gameInProgress &&
+        (newState.gameId !== state.gameId || newState.rollCount > state.rollCount);
+      let cooldownTotalMs = state.cooldownTotalMs;
+      if (rolled) cooldownTotalMs = timer;
+      else if (!hadState) cooldownTotalMs = Math.max(timer, ASSUMED_COOLDOWN_MS);
+      else if (timer > cooldownTotalMs) cooldownTotalMs = timer;
+      const merged: LoisDesNormsState = {
         ...newState,
         // Additive fields: an older server leaves them out.
         lobbyId: newState.lobbyId ?? state.lobbyId,
         lobbyName: newState.lobbyName ?? "",
-        nextRollAt: Date.now() + (newState.nextRollTimer ?? 0),
+        nextRollAt: Date.now() + timer,
         availablePlayers: { ...newState.availablePlayers, "": emptyDiscordPlayer() },
+      };
+      return {
+        ...merged,
+        cooldownTotalMs,
+        rollSeq: rolled ? state.rollSeq + 1 : state.rollSeq,
+        // A roll replaces every seat's token; the flip shows it, not a drop.
+        seatDrops: rolled ? state.seatDrops : nextSeatDrops(state, merged.players, hadState),
+        announcement: rolled ? rollAnnouncement(merged) : state.announcement,
       };
     }
     default:
@@ -80,17 +132,18 @@ type ConnectionStatus =
   | { kind: "closed"; attempt: number; retryInMs: number }
   | { kind: "gone"; reason: LobbyGoneReason };
 
-const backLink = (
-  <Link component={RouterLink} to={LOBBY_LIST_PATH} underline="hover" sx={{ display: "inline-block", mt: 1 }}>
-    ← All lobbies
+const BackLink = () => (
+  <Link
+    component={RouterLink}
+    to={LOBBY_LIST_PATH}
+    sx={{ display: "inline-flex", alignItems: "center", gap: 0.75, color: colors.inkSoft, fontWeight: 500 }}
+  >
+    <ArrowBackRounded aria-hidden sx={{ fontSize: 20 }} />
+    All lobbies
   </Link>
 );
 
-const title = (
-  <Typography variant="h4" component="h4" align="center">
-    Lois Des Norms
-  </Typography>
-);
+const headlineSx = { fontSize: { xs: "2.25rem", md: "3rem" }, overflowWrap: "anywhere" } as const;
 
 const LoisDesNormsLobby = ({ lobbyId }: { lobbyId: string }) => {
   const [state, dispatch] = useReducer(reducer, lobbyId, initialState);
@@ -207,24 +260,30 @@ const LoisDesNormsLobby = ({ lobbyId }: { lobbyId: string }) => {
 
   if (connection.kind === "gone") {
     return (
-      <Container>
-        {backLink}
-        {title}
-        <Alert severity="warning" sx={{ mt: 2 }}>
+      <FeltScene>
+        <BackLink />
+        <Typography variant="h1" component="h1" sx={{ ...headlineSx, mt: 2, mb: 3 }}>
+          {connection.reason === "notFound" ? "No such lobby" : "Lobby closed"}
+        </Typography>
+        <Alert
+          severity="warning"
+          action={
+            <Button variant="outlined" component={RouterLink} to={LOBBY_LIST_PATH}>
+              See all lobbies
+            </Button>
+          }
+        >
           {connection.reason === "notFound"
-            ? "This lobby does not exist. It may have been closed. "
-            : "This lobby was closed. "}
-          <Link component={RouterLink} to={LOBBY_LIST_PATH}>
-            See all lobbies
-          </Link>
+            ? "This lobby does not exist. It may have been closed."
+            : "This lobby was closed. Its seats are free again."}
         </Alert>
-      </Container>
+      </FeltScene>
     );
   }
 
   const connectionBanner =
     connection.kind === "open" ? null : (
-      <Alert severity={connection.kind === "closed" ? "warning" : "info"}>
+      <Alert severity={connection.kind === "closed" ? "warning" : "info"} sx={{ mb: 3 }}>
         {connection.kind === "closed"
           ? `Connection lost. Retrying in ${Math.round(connection.retryInMs / 1000)}s (attempt ${connection.attempt})…`
           : connection.attempt === 1
@@ -233,59 +292,81 @@ const LoisDesNormsLobby = ({ lobbyId }: { lobbyId: string }) => {
       </Alert>
     );
 
-  if (state.gameId < 0) {
-    return (
-      <Container>
-        {backLink}
-        {title}
-        {connectionBanner}
-        <CircularProgress />
-      </Container>
-    );
-  }
+  const loaded = state.gameId >= 0;
+  const lobbyName = state.lobbyName || lobbyId;
 
   return (
-    <Container>
-      {backLink}
-      {title}
-      <Typography variant="h5" component="h5" align="center" sx={{ overflowWrap: "anywhere" }}>
-        {state.lobbyName || lobbyId}
-      </Typography>
-      {connectionBanner}
-      <Typography variant="h5" component="h5" align="center">
-        Connected Server : {state.discordGuildName || state.discordGuild}
-      </Typography>
-      <Typography variant="h5" component="h5" align="center">
-        Voice Channel : {state.discordGuildChannel}
-      </Typography>
-      <Grid
-        container
-        direction="row"
-        justifyContent="center"
-        alignItems="center"
-        spacing={2}
-        style={{ maxWidth: "100%", minHeight: 440 }}
+    <FeltScene>
+      <BackLink />
+      <Box
+        component="header"
+        sx={{
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "flex-end",
+          justifyContent: "space-between",
+          columnGap: 3,
+          rowGap: 1.5,
+          mt: 1.5,
+          mb: 3,
+        }}
       >
-        <Grid item>
-          <Lobby
-            rollCount={state.rollCount}
-            players={state.players}
-            availablePlayers={state.availablePlayers}
-            gameInProgress={state.gameInProgress}
-            canRoll={state.canRoll}
-            nextRollAt={state.nextRollAt}
-            leagueVersion={state.leagueVersion}
-            reset={reset}
-            roll={roll}
-            cancel={cancel}
-            onPlayerChange={onPlayerChange}
-          />
-        </Grid>
-        <Grid item>
+        {loaded ? (
+          <Box sx={{ minWidth: 0 }}>
+            <Typography variant="h1" component="h1" sx={headlineSx}>
+              {state.gameInProgress ? `LOI Nº ${state.gameId}` : lobbyName}
+            </Typography>
+            <Typography sx={{ color: colors.inkSoft, mt: 0.75, overflowWrap: "anywhere" }}>
+              {state.gameInProgress ? `${lobbyName} · in game` : "Waiting for the first roll"}
+            </Typography>
+          </Box>
+        ) : (
+          <Box sx={{ width: 280 }}>
+            <Skeleton variant="text" sx={{ fontSize: "3rem" }} />
+            <Skeleton variant="text" width="60%" />
+          </Box>
+        )}
+        {loaded && (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, color: colors.inkSoft, fontSize: "0.9375rem" }}>
+            <HeadsetMicOutlined aria-hidden sx={{ fontSize: 20 }} />
+            <span>
+              {state.discordGuildName || state.discordGuild}
+              {state.discordGuildChannel ? ` · ${state.discordGuildChannel}` : ""}
+            </span>
+          </Box>
+        )}
+      </Box>
+      {connectionBanner}
+      {loaded ? (
+        <Lobby
+          rollCount={state.rollCount}
+          players={state.players}
+          availablePlayers={state.availablePlayers}
+          gameInProgress={state.gameInProgress}
+          canRoll={state.canRoll}
+          nextRollTimer={state.nextRollTimer}
+          nextRollAt={state.nextRollAt}
+          cooldownTotalMs={state.cooldownTotalMs}
+          rollSeq={state.rollSeq}
+          seatDrops={state.seatDrops}
+          leagueVersion={state.leagueVersion}
+          reset={reset}
+          roll={roll}
+          cancel={cancel}
+          onPlayerChange={onPlayerChange}
+        />
+      ) : (
+        <LobbySkeleton />
+      )}
+      {loaded && (
+        <Box sx={{ mt: { xs: 4, md: 4 } }}>
           <AdditionalInformationBlock availablePlayers={state.availablePlayers} />
-        </Grid>
-      </Grid>
-    </Container>
+        </Box>
+      )}
+      <div aria-live="polite" style={visuallyHidden}>
+        {state.announcement}
+      </div>
+    </FeltScene>
   );
 };
 

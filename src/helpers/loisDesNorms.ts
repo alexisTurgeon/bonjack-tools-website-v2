@@ -97,6 +97,16 @@ export const emptyPlayer = (): Player => {
   return { player: emptyDiscordPlayer(), role: undefined, champion: undefined };
 };
 
+/** First letter of a name, for the initial disc. */
+export const initialOf = (name: string | undefined): string =>
+  Array.from(name?.trim() ?? "")[0]?.toLocaleUpperCase() ?? "?";
+
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
+
+/** One-line stat note under a player's name: "12 games · 31 rolls". */
+export const statNote = (stats: PlayerStats | undefined): string | undefined =>
+  stats ? `${plural(stats.numberOfGame, "game")} · ${plural(stats.totalRoll, "roll")}` : undefined;
+
 export const winRate = (stats: PlayerStats | undefined): number => {
   if (!stats || stats.numberOfGame === 0 || stats.totalRoll === 0) return 0;
   return (stats.numberOfGame / stats.totalRoll) * 100;

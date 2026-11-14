@@ -1,13 +1,16 @@
 import { useState } from "react";
-import { Alert, Button, CircularProgress, Container, Stack, Typography } from "@mui/material";
+import { Alert, Box, Button, Skeleton, Typography } from "@mui/material";
+import AddRounded from "@mui/icons-material/AddRounded";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 import { deleteLobby, listLobbies, LobbySummary } from "../api/loisDesNorms";
 import { LOBBIES_QUERY_KEY } from "../helpers/loisDesNorms";
 import { apiErrorMessage } from "../helpers/swiss";
 import ConfirmDialog from "../components/Swiss/ConfirmDialog";
+import FeltScene from "../components/LoisDesNorms/FeltScene";
 import LobbyCard from "../components/LoisDesNorms/LobbyCard";
 import NewLobbyDialog from "../components/LoisDesNorms/NewLobbyDialog";
+import { colors, dashedLine, line, radii } from "../components/LoisDesNorms/tokens";
 
 const POLL_INTERVAL_MS = 3000;
 
@@ -21,6 +24,25 @@ const closeErrorMessage = (error: unknown): string => {
 };
 
 const canClose = (lobby: LobbySummary) => !lobby.isDefault && !lobby.gameInProgress;
+
+const gridSx = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 340px), 1fr))",
+  gap: { xs: 2, md: 3 },
+} as const;
+
+/** Placeholder table with the same size and lines as a real one. */
+const TileSkeleton = () => (
+  <Box sx={{ border: line(colors.inkRule), borderRadius: `${radii.panel}px`, p: 2.5, display: "grid", gap: 2 }}>
+    <Skeleton variant="text" width="55%" sx={{ fontSize: "1.375rem" }} />
+    <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px 16px" }}>
+      {Array.from({ length: 6 }, (_, i) => (
+        <Skeleton key={i} variant="rounded" height={26} />
+      ))}
+    </Box>
+    <Skeleton variant="rounded" height={36} />
+  </Box>
+);
 
 /** Lobby list at /lois-des-norms. */
 const LoisDesNormsLobbies = () => {
@@ -39,49 +61,96 @@ const LoisDesNormsLobbies = () => {
     // A 404 or 409 also means the list is stale.
     onSettled: () => queryClient.invalidateQueries({ queryKey: LOBBIES_QUERY_KEY }),
   });
+  const count = query.data?.length;
 
   return (
-    <Container>
-      <Typography variant="h4" component="h4" align="center">
-        Lois Des Norms
-      </Typography>
-      <Typography align="center" color="text.secondary">
-        Pick a lobby, or start a new one for another group.
-      </Typography>
-      <Stack direction="row" justifyContent="center" sx={{ my: 2 }}>
-        <Button variant="contained" onClick={() => setCreating(true)}>
+    <FeltScene>
+      <Box
+        component="header"
+        sx={{
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "flex-end",
+          justifyContent: "space-between",
+          gap: 2,
+          mb: { xs: 3, md: 4 },
+        }}
+      >
+        <Box>
+          <Typography variant="h1" component="h1" sx={{ fontSize: { xs: "2.125rem", md: "2.75rem" } }}>
+            Lois des Norms
+          </Typography>
+          <Typography sx={{ color: colors.inkSoft, mt: 1 }}>
+            {count === undefined
+              ? "Tables tonight"
+              : `${count} table${count === 1 ? "" : "s"} tonight`}
+          </Typography>
+        </Box>
+        <Button
+          variant="contained"
+          size="large"
+          startIcon={<AddRounded />}
+          onClick={() => setCreating(true)}
+        >
           New lobby
         </Button>
-      </Stack>
-      <Stack spacing={2} sx={{ maxWidth: 640, mx: "auto" }}>
-        {query.isPending && <CircularProgress sx={{ alignSelf: "center" }} />}
-        {query.isError && <Alert severity="error">{apiErrorMessage(query.error)}</Alert>}
+      </Box>
+
+      <Box sx={{ display: "grid", gap: 2, mb: query.isError || remove.isError ? 3 : 0 }}>
+        {query.isError && (
+          <Alert severity="error">Could not load the tables: {apiErrorMessage(query.error)}</Alert>
+        )}
         {remove.isError && (
           <Alert severity="error" onClose={() => remove.reset()}>
             {closeErrorMessage(remove.error)}
           </Alert>
         )}
-        {query.data && query.data.length === 0 && (
-          <Typography align="center" color="text.secondary">
-            No lobby yet.
+      </Box>
+
+      {query.isPending && (
+        <Box sx={gridSx} aria-busy="true" aria-label="Loading tables">
+          <TileSkeleton />
+          <TileSkeleton />
+          <TileSkeleton />
+        </Box>
+      )}
+      {query.data && query.data.length === 0 && (
+        <Box
+          sx={{
+            border: dashedLine(),
+            borderRadius: `${radii.panel}px`,
+            p: { xs: 3, md: 5 },
+            textAlign: "center",
+          }}
+        >
+          <Typography variant="h2" component="p">
+            No table is open
           </Typography>
-        )}
-        {query.data?.map((lobby) => (
-          <LobbyCard
-            key={lobby.id}
-            lobby={lobby}
-            onClose={
-              canClose(lobby)
-                ? () => {
-                    setCloseCandidate(lobby);
-                    setConfirmOpen(true);
-                  }
-                : undefined
-            }
-            closing={remove.isPending && remove.variables === lobby.id}
-          />
-        ))}
-      </Stack>
+          <Typography sx={{ color: colors.inkSoft, mt: 1 }}>
+            Start one with New lobby, then seat the group.
+          </Typography>
+        </Box>
+      )}
+      {query.data && query.data.length > 0 && (
+        <Box sx={gridSx}>
+          {query.data.map((lobby) => (
+            <LobbyCard
+              key={lobby.id}
+              lobby={lobby}
+              onClose={
+                canClose(lobby)
+                  ? () => {
+                      setCloseCandidate(lobby);
+                      setConfirmOpen(true);
+                    }
+                  : undefined
+              }
+              closing={remove.isPending && remove.variables === lobby.id}
+            />
+          ))}
+        </Box>
+      )}
+
       <NewLobbyDialog open={creating} onClose={() => setCreating(false)} />
       <ConfirmDialog
         open={confirmOpen}
@@ -95,7 +164,7 @@ const LoisDesNormsLobbies = () => {
         }}
         onCancel={() => setConfirmOpen(false)}
       />
-    </Container>
+    </FeltScene>
   );
 };
 
