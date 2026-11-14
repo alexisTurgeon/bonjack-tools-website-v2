@@ -24,6 +24,12 @@ export const loisDesNormsRoute: AppRoute = {
   path: "/lois-des-norms",
   element: LoisDesNorms,
 };
+export const loisDesNormsLobbyRoute: AppRoute = {
+  name: "Lois des Norms Lobby",
+  path: "/lois-des-norms/:lobbyId",
+  element: LoisDesNorms,
+  hidden: true,
+};
 export const guessTheSongRoute: AppRoute = {
   name: "Guess the Song",
   path: "/guess-the-song",
@@ -65,6 +71,7 @@ export const swissTournament: AppRoute = {
 export const routes: AppRoute[] = [
   homeRoute,
   loisDesNormsRoute,
+  loisDesNormsLobbyRoute,
   guessTheSongRoute,
   cryptoTracker,
   profile,
