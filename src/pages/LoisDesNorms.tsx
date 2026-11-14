@@ -18,6 +18,7 @@ import {
   LoisDesNormsState,
   MessageActions,
   Player,
+  SEAT_COUNT,
 } from "../helpers/loisDesNorms";
 import AdditionalInformationBlock from "../components/LoisDesNorms/AdditionalInformationBlock";
 import Lobby from "../components/LoisDesNorms/Lobby";
@@ -32,7 +33,7 @@ const LOBBY_NOT_FOUND_CLOSE_CODE = 4404;
 const initialState = (lobbyId: string): LoisDesNormsState => ({
   lobbyId,
   lobbyName: "",
-  players: Array.from({ length: 5 }, emptyPlayer),
+  players: Array.from({ length: SEAT_COUNT }, emptyPlayer),
   rollCount: 0,
   gameInProgress: false,
   gameId: -1,

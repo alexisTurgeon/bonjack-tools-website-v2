@@ -69,6 +69,10 @@ export interface LoisDesNormsState {
 
 export const DEFAULT_LOBBY_ID = "main";
 export const LOBBY_LIST_PATH = "/lois-des-norms";
+/** Seats in a lobby. */
+export const SEAT_COUNT = 5;
+/** react-query key of the lobby list. */
+export const LOBBIES_QUERY_KEY = ["ldn-lobbies"] as const;
 
 export const lobbyPath = (lobbyId: string): string =>
   `${LOBBY_LIST_PATH}/${encodeURIComponent(lobbyId)}`;
