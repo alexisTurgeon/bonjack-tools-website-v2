@@ -12,7 +12,8 @@ interface Props {
 
 /** One row of the lobby list: name, status, seated players, viewers, Open and Close. */
 const LobbyCard = ({ lobby, onClose, closing }: Props) => {
-  const seated = lobby.players.map((p) => p.name || p.id);
+  // A Go nil slice arrives as null: treat it as no one seated.
+  const seated = (lobby.players ?? []).map((p) => p.name || p.id);
   const viewers = `${lobby.viewers} viewer${lobby.viewers === 1 ? "" : "s"}`;
 
   return (
