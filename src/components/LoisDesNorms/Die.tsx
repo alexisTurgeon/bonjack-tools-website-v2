@@ -1,4 +1,5 @@
 import { Box } from "@mui/material";
+import { keyframes } from "@mui/material/styles";
 import { fadeIn, REDUCED, tumble } from "./motion";
 import { colors, fonts, motion } from "./tokens";
 
@@ -42,14 +43,24 @@ interface Props {
 
 const numeralSize = (value: number) => (value < 10 ? 30 : value < 100 ? 24 : 18);
 
-/**
- * Going dim waits for the tumble to land (a roll starts the cooldown at once);
- * becoming ready shows straight away.
- */
-const dimTransition = (dim: boolean, properties: string[]) =>
-  properties
-    .map((p) => (dim ? `${p} 220ms ease-out ${motion.tumble}ms` : `${p} ${motion.quick}ms ease-out`))
-    .join(", ");
+const DIM_OPACITY = 0.34;
+const DIM_NUMERAL = "#FFD48A";
+
+// A roll starts the cooldown at once, so the die mounts dim; these run from
+// the lit look to the dim one after the tumble has landed.
+const settleFacets = keyframes`
+  from { opacity: 1; }
+  to { opacity: ${DIM_OPACITY}; }
+`;
+const settleEdges = keyframes`
+  from { stroke: ${EDGE}; }
+  to { stroke: ${colors.amber}; }
+`;
+const settleNumeral = keyframes`
+  from { fill: ${colors.amberInk}; }
+  to { fill: ${DIM_NUMERAL}; }
+`;
+const afterLanding = (name: string) => `${name} 240ms ease-out ${motion.tumble}ms both`;
 
 /** Amber resin d20 whose top face shows the roll count, or "Start" before the first roll. */
 const Die = ({ value, dim, rollSeq }: Props) => {
@@ -70,26 +81,38 @@ const Die = ({ value, dim, rollSeq }: Props) => {
         [REDUCED]: { animation: "none" },
       }}
     >
-      <g style={{ opacity: dim ? 0.34 : 1, transition: dimTransition(dim, ["opacity"]) }}>
+      <Box
+        component="g"
+        sx={{
+          opacity: dim ? DIM_OPACITY : 1,
+          animation: rolled && dim ? afterLanding(settleFacets) : "none",
+          [REDUCED]: { animation: "none" },
+        }}
+      >
         {FACETS.map(([points, fill]) => (
           <polygon key={points} points={points} fill={fill} />
         ))}
         <polygon points={TOP_FACE} fill={colors.amber} />
         {/* Light caught on the upper-left edge of the resin. */}
         <polygon points="50,7 12,29 16,31 50,11" fill="#FFF3D6" opacity="0.55" />
-      </g>
-      <g
+      </Box>
+      <Box
+        component="g"
         fill="none"
         strokeWidth="1.6"
         strokeLinejoin="round"
-        style={{ stroke: dim ? colors.amber : EDGE, transition: dimTransition(dim, ["stroke"]) }}
+        sx={{
+          stroke: dim ? colors.amber : EDGE,
+          animation: rolled && dim ? afterLanding(settleEdges) : "none",
+          [REDUCED]: { animation: "none" },
+        }}
       >
         {FACETS.map(([points]) => (
           <polygon key={points} points={points} />
         ))}
         <polygon points={TOP_FACE} />
         <polygon points={OUTLINE} strokeWidth="2.2" />
-      </g>
+      </Box>
       <Box
         component="text"
         x="50"
@@ -97,14 +120,18 @@ const Die = ({ value, dim, rollSeq }: Props) => {
         textAnchor="middle"
         dominantBaseline="central"
         sx={{
-          fill: dim ? "#FFD48A" : colors.amberInk,
-          transition: dimTransition(dim, ["fill"]),
+          fill: dim ? DIM_NUMERAL : colors.amberInk,
           fontFamily: fonts.display,
           fontWeight: 800,
           fontSize: value === undefined ? 10.5 : numeralSize(value),
           letterSpacing: value === undefined ? "0.04em" : "-0.02em",
           fontVariantNumeric: "tabular-nums",
-          animation: rolled ? `${fadeIn} ${motion.quick}ms ease-out ${motion.tumble * 0.7}ms both` : "none",
+          animation: rolled
+            ? [
+                `${fadeIn} ${motion.quick}ms ease-out ${motion.tumble * 0.7}ms both`,
+                ...(dim ? [afterLanding(settleNumeral)] : []),
+              ].join(", ")
+            : "none",
           [REDUCED]: { animation: "none" },
         }}
       >

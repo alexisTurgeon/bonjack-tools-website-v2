@@ -23,7 +23,7 @@ const PlayMat = ({ children, small, sx }: Props) => {
           ...matNap,
           borderRadius: `${radius}px`,
           boxShadow: `0 3px 3px rgba(3, 14, 9, 0.55), 0 18px 34px ${colors.shadow}`,
-          p: small ? 2 : { xs: 1.75, sm: 3 },
+          p: small ? 2 : { xs: 1.75, sm: 2.5 },
           "&::before": {
             content: '""',
             position: "absolute",

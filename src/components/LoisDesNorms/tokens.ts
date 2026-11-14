@@ -81,7 +81,7 @@ export const sizes = {
   seatMinWidth: 176,
   die: 116,
   dieCompact: 84,
-  trayWidth: 184,
+  trayWidth: 176,
   disc: 32,
   discSmall: 26,
   content: 1440,

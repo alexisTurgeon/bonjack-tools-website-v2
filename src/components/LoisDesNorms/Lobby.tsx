@@ -32,28 +32,39 @@ export interface LobbyProperties {
 /** From this width the tray sits right of the seats; below it, above them. */
 const WIDE = "(min-width: 1280px)";
 
-const matSx = {
+/** Wide: five seats and the tray on one row. */
+const wideSx = {
+  display: "grid",
+  gap: 1.25,
+  gridTemplateColumns: `repeat(${SEAT_COUNT}, minmax(0, 1fr)) ${sizes.trayWidth}px`,
+} as const;
+
+/** Narrower: the seats wrap under the tray; auto-fit leaves no empty track beside them. */
+const seatsSx = {
   display: "grid",
   gap: 1.5,
   gridTemplateColumns: {
     xs: "minmax(0, 1fr)",
-    sm: `repeat(auto-fill, minmax(${sizes.seatMinWidth}px, 1fr))`,
-  },
-  "& > .die-tray": { gridColumn: "1 / -1" },
-  [`@media ${WIDE}`]: {
-    gridTemplateColumns: `repeat(${SEAT_COUNT}, minmax(0, 1fr)) ${sizes.trayWidth}px`,
-    "& > .die-tray": { gridColumn: "auto" },
+    sm: `repeat(auto-fit, minmax(${sizes.seatMinWidth}px, 1fr))`,
   },
 } as const;
 
 /** Seats and tray in reading order: the DOM order follows the layout, not CSS order. */
 const MatGrid = ({ tray, seats, label }: { tray: ReactNode; seats: ReactNode; label?: string }) => {
   const wide = useMediaQuery(WIDE, { noSsr: true });
+  const busy = label ? { "aria-busy": true, "aria-label": label } : {};
+  if (wide) {
+    return (
+      <Box sx={wideSx} {...busy}>
+        {seats}
+        <div>{tray}</div>
+      </Box>
+    );
+  }
   return (
-    <Box sx={matSx} aria-busy={label ? "true" : undefined} aria-label={label}>
-      {!wide && <Box className="die-tray">{tray}</Box>}
-      {seats}
-      {wide && <Box className="die-tray">{tray}</Box>}
+    <Box sx={{ display: "grid", gap: 1.5 }} {...busy}>
+      <div>{tray}</div>
+      <Box sx={seatsSx}>{seats}</Box>
     </Box>
   );
 };

@@ -141,7 +141,7 @@ const PlayerInfo = (props: PlayerInfoProperties) => {
             "& .MuiSelect-select": {
               borderRadius: `${radii.control}px`,
               py: 0.75,
-              pl: 0.5,
+              pl: 0.25,
               // The chevron sits beside the name line only; the stat note runs under it.
               pr: "4px !important",
               transition: `background-color ${motion.quick}ms`,
