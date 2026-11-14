@@ -1,43 +1,38 @@
 import type { CSSProperties } from "react";
 import { LeagueOfLegendsRole } from "../../helpers/loisDesNorms";
 
-/** Design tokens of the Lois des Norms pages. Their colours, radii, line and sizes all come from here. */
+/** Design tokens of the Lois des Norms pages. Their colours, frame, fonts and sizes all come from here. */
 export const colors = {
-  /** Page ground: the table the mats lie on. Also the footer's ground. */
-  table: "#0A261C",
-  /** Play mat felt. */
-  felt: "#15472F",
-  /** Recessed felt: the die tray well, the rules screen, menus and dialogs. */
-  feltDeep: "#0D3224",
-  /** Text and printed lines. */
-  ink: "#F1F4EC",
-  /** Secondary text, tinted green. */
-  inkSoft: "#C3D5C8",
-  /** Quiet text (open seats, disabled): still AA on every felt tone. */
-  inkFaint: "#A3C0AE",
-  /** Printed lines. */
-  inkLine: "rgba(241, 244, 236, 0.58)",
-  /** Hairline rules inside a panel (same weight, lower contrast). */
-  inkRule: "rgba(241, 244, 236, 0.22)",
-  inkWash: "rgba(241, 244, 236, 0.08)",
-  inkWashStrong: "rgba(241, 244, 236, 0.14)",
-  /** Cardboard: token backs and initial discs. */
-  card: "#EDE6D3",
-  cardInk: "#173F2F",
-  /** Primary action only: the die and New lobby. */
-  amber: "#F2A93B",
-  amberHover: "#F6BA5E",
-  amberEdge: "#B8741A",
-  amberInk: "#2E1B03",
+  /** Page ground, deepest. Also the footer's ground. */
+  void: "#010A13",
+  /** Panels and the ground's upper tone. */
+  navy: "#0A1428",
+  /** Raised panels, hover. */
+  navyRaised: "#0F1E36",
+  /** Gold frame, light and dark ends. */
+  gold: "#C8AA6E",
+  goldDark: "#785A28",
+  /** Gold for text and the focused row (readable on navy). */
+  goldText: "#D9BE85",
+  /** Main text. */
+  cream: "#F0E6D2",
+  /** Secondary text. */
+  muted: "#A09B8C",
+  /** Hairlines between rows of data. */
+  rule: "rgba(200, 170, 110, 0.22)",
+  /** Timer and live state. */
+  cyan: "#0AC8B9",
+  cyanDark: "#0397AB",
+  /** Rule circles. */
+  red: "#C8304A",
+  redText: "#F08A99",
   /** Destructive confirm only. */
-  danger: "#B3362B",
-  dangerHover: "#C4443A",
-  /** Error text on felt. */
-  dangerInk: "#FFB4A9",
-  shadow: "rgba(4, 18, 12, 0.55)",
+  danger: "#B3262F",
+  dangerHover: "#C9343D",
+  shadow: "rgba(0, 4, 10, 0.6)",
 } as const;
 
-/** Used on token rims and role chips only. */
+/** Used on role frames and role labels only. */
 export const roleColors: Record<LeagueOfLegendsRole, string> = {
   TOP: "#7EB6F2",
   JUNGLE: "#A9D45F",
@@ -46,69 +41,66 @@ export const roleColors: Record<LeagueOfLegendsRole, string> = {
   SUPPORT: "#5ED6C8",
 };
 
-/** Line weight of every printed line, in px. */
-export const LINE = 2;
-export const line = (color: string = colors.inkLine) => `${LINE}px solid ${color}`;
-export const dashedLine = (color: string = colors.inkLine) => `${LINE}px dashed ${color}`;
+/** Width of every gold frame line, in px. */
+export const FRAME = 2;
 
-/** Corner radii, scaled by the size of the piece. */
-export const radii = {
-  /** Tiles, seat zones, the die tray, the rules screen, dialogs. */
-  panel: 14,
-  /** Buttons, inputs, menus. */
-  control: 10,
-  /** Badges and chips. */
-  badge: 6,
-  /** Play mats. */
-  mat: 22,
-  round: 999,
+/** The one gold frame: a 2px border shading from light gold at the top to dark gold at the bottom. */
+export const goldFrame = {
+  border: `${FRAME}px solid transparent`,
+  borderImage: `linear-gradient(180deg, ${colors.gold}, ${colors.goldDark}) 1`,
 } as const;
 
-/** Spacing steps, in px. */
-export const space = { xxs: 4, xs: 8, sm: 12, md: 16, lg: 24, xl: 40 } as const;
+/** The one bevel: a dark inner line and a faint light line along the top edge. */
+export const bevel = `inset 0 0 0 1px ${colors.void}, inset 0 2px 0 rgba(240, 230, 210, 0.08)`;
 
 export const fonts = {
-  display: '"Bricolage Grotesque Variable", "Roboto", "Helvetica", "Arial", sans-serif',
+  /** Tracked capital serif: names, headings, the timer. */
+  display: '"Cinzel Variable", "Times New Roman", serif',
+  /** Italic serif for the focused champion's name. */
+  italic: '"Cormorant Garamond Variable", "Times New Roman", serif',
   ui: '"Roboto", "Helvetica", "Arial", sans-serif',
+  /** Data: stats, patch, timers in the log. */
+  mono: '"JetBrains Mono Variable", ui-monospace, "SFMono-Regular", Menlo, monospace',
 } as const;
 
-/** Fixed sizes: a seat keeps its size in every state. */
+/** Tracking for capital serif text. */
+export const caps = { fontFamily: fonts.display, textTransform: "uppercase", letterSpacing: "0.08em" } as const;
+
 export const sizes = {
-  token: 112,
-  tokenCompact: 72,
-  seatHeight: 300,
-  seatHeightCompact: 104,
-  seatMinWidth: 184,
-  die: 112,
-  dieWide: 104,
-  dieCompact: 84,
-  trayWidth: 176,
-  disc: 32,
+  /** Seat row portrait. */
+  portrait: 92,
+  portraitCompact: 72,
+  seatRow: 104,
+  roleFrame: 36,
+  /** Centre splash ring. */
+  ring: 300,
+  ringCompact: 220,
+  thumb: 48,
+  benchSquare: 34,
+  disc: 30,
   discSmall: 26,
+  leftColumn: 380,
+  rightColumn: 340,
   content: 1440,
 } as const;
 
-/** Soft offset shadow of a piece resting on the felt. */
-export const restingShadow = `0 6px 12px ${colors.shadow}`;
-export const liftedShadow = `0 12px 22px ${colors.shadow}`;
-
 export const motion = {
-  /** Confident arrival. */
   easeOut: "cubic-bezier(0.16, 1, 0.3, 1)",
   quick: 150,
   routine: 220,
-  tumble: 640,
-  flip: 480,
-  /** Delay between two seats flipping on a roll. */
-  flipStagger: 130,
-  /** Delay before the first token flips, while the die tumbles. */
-  flipLead: 420,
-  drop: 320,
+  /** Gold flash running down the five rows. */
+  sweep: 700,
+  /** One portrait swapping in. */
+  swap: 420,
+  /** Delay between two seats swapping on a roll. */
+  stagger: 120,
+  /** Centre splash cross-fade. */
+  crossFade: 600,
 } as const;
 
-/** Focus ring on the felt. */
+/** Focus ring on the navy ground. */
 export const focusRing = {
-  outline: `${LINE}px solid ${colors.ink}`,
+  outline: `${FRAME}px solid ${colors.cyan}`,
   outlineOffset: 3,
 } as const;
 

@@ -4,23 +4,13 @@ import { Link as RouterLink } from "react-router-dom";
 import { AvailablePlayers, PlayerStats, statNote, winRate } from "../../helpers/loisDesNorms";
 import Nameplate from "./Nameplate";
 import { playerStatsQuery, statsOf } from "./playerStats";
-import { colors, fonts, line, visuallyHidden } from "./tokens";
+import { caps, colors, fonts, visuallyHidden } from "./tokens";
 
-const NUMBER_COLUMNS = ["Games", "Rolls", "Win rate"] as const;
+const cellSx = { py: 0.75, px: 0.75, borderBottom: `1px solid ${colors.rule}` } as const;
+const numberSx = { ...cellSx, textAlign: "right", fontFamily: fonts.mono, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" } as const;
+const headSx = { ...caps, fontSize: "0.6875rem", letterSpacing: "0.12em", color: colors.muted, fontWeight: 700, borderBottom: `1px solid ${colors.goldDark}` } as const;
 
-const cellSx = { py: 1.25, px: { xs: 0.5, sm: 1.5 }, borderBottom: line(colors.inkRule) } as const;
-const numberSx = { ...cellSx, textAlign: "right", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" } as const;
-
-const WinRate = ({ value }: { value: number }) => (
-  <Box sx={{ display: "grid", justifyItems: "end", gap: 0.5 }}>
-    <span>{value.toFixed(1)} %</span>
-    <Box aria-hidden sx={{ width: { xs: 44, sm: 64 }, height: 2, backgroundColor: colors.inkRule }}>
-      <Box sx={{ width: `${Math.min(100, value)}%`, height: "100%", backgroundColor: colors.ink }} />
-    </Box>
-  </Box>
-);
-
-/** Scoresheet of the players in the voice channel: games, rolls and win rate. */
+/** Ledger of the players in the voice channel: games won, total rolls, win rate. */
 const Stats = (props: { availablePlayers: AvailablePlayers }) => {
   // Live stats per player; the lobby state's own (stale) stats are only placeholders.
   const players = Object.entries(props.availablePlayers).filter(([id, p]) => id !== "" && p && p.name);
@@ -33,8 +23,8 @@ const Stats = (props: { availablePlayers: AvailablePlayers }) => {
 
   if (rows.length === 0) {
     return (
-      <Typography sx={{ color: colors.inkSoft }}>
-        No stats yet for the players in the voice channel. They count from the first finished loi.
+      <Typography sx={{ color: colors.muted, fontSize: "0.9375rem" }}>
+        No stats yet for the players in voice. They count from the first finished loi.
       </Typography>
     );
   }
@@ -45,66 +35,53 @@ const Stats = (props: { availablePlayers: AvailablePlayers }) => {
   };
 
   return (
-    <Box sx={{ overflowX: "auto" }}>
-      <Box
-        component="table"
-        sx={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed", fontSize: "0.9375rem" }}
-      >
-        <caption style={visuallyHidden}>Player stats: games won, total rolls and win rate</caption>
-        <colgroup>
-          <col />
-          {/* The figures share the panel's width with the names: no dead band at desktop width. */}
-          <Box component="col" sx={{ width: { xs: 52, sm: "18%" } }} />
-          <Box component="col" sx={{ width: { xs: 48, sm: "18%" } }} />
-          <Box component="col" sx={{ width: { xs: 72, sm: "22%" } }} />
-        </colgroup>
-        <thead>
-          <tr>
-            <Box component="th" scope="col" sx={{ ...cellSx, textAlign: "left", color: colors.inkSoft, fontWeight: 600, fontSize: "0.8125rem", borderBottom: line() }}>
-              Player
+    <Box component="table" sx={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed", fontSize: "0.875rem" }}>
+      <caption style={visuallyHidden}>Player stats: games won, total rolls and win rate</caption>
+      <colgroup>
+        <col />
+        <col style={{ width: 44 }} />
+        <col style={{ width: 48 }} />
+        <col style={{ width: 64 }} />
+      </colgroup>
+      <thead>
+        <tr>
+          <Box component="th" scope="col" sx={{ ...cellSx, ...headSx, textAlign: "left" }}>Player</Box>
+          <Box component="th" scope="col" sx={{ ...numberSx, ...headSx }} title="Games won">G</Box>
+          <Box component="th" scope="col" sx={{ ...numberSx, ...headSx }} title="Total rolls">R</Box>
+          <Box component="th" scope="col" sx={{ ...numberSx, ...headSx }} title="Win rate">WR</Box>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((row) => (
+          <tr key={row.id}>
+            <Box component="th" scope="row" sx={{ ...cellSx, textAlign: "left", fontWeight: 400 }}>
+              <Nameplate
+                size="sm"
+                initialFrom={row.name}
+                name={
+                  <Link component={RouterLink} to={`/profile?id=${encodeURIComponent(row.id)}`} sx={{ color: colors.cream }}>
+                    {row.name}
+                  </Link>
+                }
+                note={statNote(row.stats)}
+              />
             </Box>
-            {NUMBER_COLUMNS.map((label) => (
-              <Box key={label} component="th" scope="col" sx={{ ...numberSx, color: colors.inkSoft, fontWeight: 600, fontSize: "0.8125rem", borderBottom: line() }}>
-                {label}
-              </Box>
-            ))}
+            <Box component="td" sx={numberSx}>{row.stats.numberOfGame}</Box>
+            <Box component="td" sx={numberSx}>{row.stats.totalRoll}</Box>
+            <Box component="td" sx={numberSx}>{winRate(row.stats).toFixed(1)}%</Box>
           </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={row.id}>
-              <Box component="th" scope="row" sx={{ ...cellSx, textAlign: "left", fontWeight: 400 }}>
-                <Nameplate
-                  initialFrom={row.name}
-                  name={
-                    <Link component={RouterLink} to={`/profile?id=${encodeURIComponent(row.id)}`}>
-                      {row.name}
-                    </Link>
-                  }
-                  note={statNote(row.stats)}
-                />
-              </Box>
-              <Box component="td" sx={numberSx}>{row.stats.numberOfGame}</Box>
-              <Box component="td" sx={numberSx}>{row.stats.totalRoll}</Box>
-              <Box component="td" sx={numberSx}>
-                <WinRate value={winRate(row.stats)} />
-              </Box>
-            </tr>
-          ))}
-        </tbody>
-        <tfoot>
-          <tr>
-            <Box component="th" scope="row" sx={{ ...cellSx, textAlign: "left", borderBottom: "none", fontFamily: fonts.display, fontWeight: 700, fontSize: "1.0625rem" }}>
-              Team
-            </Box>
-            <Box component="td" sx={{ ...numberSx, borderBottom: "none", fontWeight: 600 }}>{team.numberOfGame}</Box>
-            <Box component="td" sx={{ ...numberSx, borderBottom: "none", fontWeight: 600 }}>{team.totalRoll}</Box>
-            <Box component="td" sx={{ ...numberSx, borderBottom: "none", fontWeight: 600 }}>
-              <WinRate value={winRate(team)} />
-            </Box>
-          </tr>
-        </tfoot>
-      </Box>
+        ))}
+      </tbody>
+      <tfoot>
+        <tr>
+          <Box component="th" scope="row" sx={{ ...cellSx, ...caps, textAlign: "left", borderBottom: "none", fontWeight: 700, color: colors.goldText }}>
+            Team
+          </Box>
+          <Box component="td" sx={{ ...numberSx, borderBottom: "none", color: colors.goldText }}>{team.numberOfGame}</Box>
+          <Box component="td" sx={{ ...numberSx, borderBottom: "none", color: colors.goldText }}>{team.totalRoll}</Box>
+          <Box component="td" sx={{ ...numberSx, borderBottom: "none", color: colors.goldText }}>{winRate(team).toFixed(1)}%</Box>
+        </tr>
+      </tfoot>
     </Box>
   );
 };

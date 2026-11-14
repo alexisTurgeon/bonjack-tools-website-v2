@@ -1,16 +1,16 @@
 import { ReactNode } from "react";
 import { Box, Typography } from "@mui/material";
 import { initialOf } from "../../helpers/loisDesNorms";
-import { colors, dashedLine, fonts, sizes } from "./tokens";
+import { colors, fonts, sizes } from "./tokens";
 
 interface DiscProps {
   name?: string | null;
   size?: number;
-  /** An open seat: printed outline, no letter. */
+  /** An open seat: dark empty ring, no letter. */
   empty?: boolean;
 }
 
-/** Cardboard disc with the player's initial. */
+/** Round chip with the player's initial inside a thin gold ring. */
 export const InitialDisc = ({ name, size = sizes.disc, empty }: DiscProps) => (
   <Box
     aria-hidden
@@ -22,16 +22,13 @@ export const InitialDisc = ({ name, size = sizes.disc, empty }: DiscProps) => (
       display: "grid",
       placeItems: "center",
       fontFamily: fonts.display,
-      fontWeight: 750,
-      fontSize: Math.round(size * 0.47),
+      fontWeight: 700,
+      fontSize: Math.round(size * 0.44),
       lineHeight: 1,
-      ...(empty
-        ? { border: dashedLine(colors.inkLine) }
-        : {
-            backgroundColor: colors.card,
-            color: colors.cardInk,
-            boxShadow: `0 2px 4px ${colors.shadow}`,
-          }),
+      backgroundColor: colors.void,
+      border: `1px solid ${empty ? "rgba(160, 155, 140, 0.35)" : colors.goldDark}`,
+      boxShadow: empty ? "none" : `inset 0 0 0 1px ${colors.void}, inset 0 0 0 2px rgba(200, 170, 110, 0.35)`,
+      color: colors.goldText,
     }}
   >
     {empty ? null : initialOf(name)}
@@ -50,28 +47,32 @@ interface NameplateProps {
   empty?: boolean;
   /** Room kept free at the end of the name line (px), e.g. for a select's chevron. */
   reserveEnd?: number;
+  /** Leave the disc out where a portrait already stands for the player. */
+  noDisc?: boolean;
 }
 
-/** The one way a player is shown: initial disc, name, stat note. */
-const Nameplate = ({ name, initialFrom, note, reserveNote, size = "md", empty, reserveEnd = 0 }: NameplateProps) => {
+/** The one way a player is shown: initial disc, name, stat note in monospace. */
+const Nameplate = ({ name, initialFrom, note, reserveNote, size = "md", empty, reserveEnd = 0, noDisc }: NameplateProps) => {
   const small = size === "sm";
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 0 }}>
-      <InitialDisc
-        name={initialFrom !== undefined ? initialFrom : typeof name === "string" ? name : undefined}
-        size={small ? sizes.discSmall : sizes.disc}
-        empty={empty}
-      />
+      {!noDisc && (
+        <InitialDisc
+          name={initialFrom !== undefined ? initialFrom : typeof name === "string" ? name : undefined}
+          size={small ? sizes.discSmall : sizes.disc}
+          empty={empty}
+        />
+      )}
       <Box sx={{ minWidth: 0, flex: 1 }}>
         <Typography
           component="span"
           noWrap
           sx={{
             display: "block",
-            fontWeight: empty ? 400 : 500,
+            fontWeight: 500,
             fontSize: small ? "0.875rem" : "0.9375rem",
             lineHeight: 1.35,
-            color: empty ? colors.inkFaint : colors.ink,
+            color: empty ? colors.muted : colors.cream,
             pr: `${reserveEnd}px`,
           }}
         >
@@ -81,9 +82,9 @@ const Nameplate = ({ name, initialFrom, note, reserveNote, size = "md", empty, r
           <Typography
             component="span"
             noWrap
-            sx={{ display: "block", fontSize: "0.8125rem", lineHeight: 1.35, color: colors.inkSoft }}
+            sx={{ display: "block", fontFamily: fonts.mono, fontSize: "0.75rem", lineHeight: 1.45, color: colors.muted }}
           >
-            {note ?? "\u00a0"}
+            {note ?? " "}
           </Typography>
         )}
       </Box>

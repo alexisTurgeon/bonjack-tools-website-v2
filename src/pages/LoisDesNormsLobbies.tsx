@@ -7,10 +7,10 @@ import { deleteLobby, listLobbies, LobbySummary } from "../api/loisDesNorms";
 import { LOBBIES_QUERY_KEY } from "../helpers/loisDesNorms";
 import { apiErrorMessage } from "../helpers/swiss";
 import ConfirmDialog from "../components/Swiss/ConfirmDialog";
-import FeltScene from "../components/LoisDesNorms/FeltScene";
-import LobbyCard from "../components/LoisDesNorms/LobbyCard";
+import ClientScene from "../components/LoisDesNorms/ClientScene";
+import LobbyCard, { LobbyTableHead } from "../components/LoisDesNorms/LobbyCard";
 import NewLobbyDialog from "../components/LoisDesNorms/NewLobbyDialog";
-import { colors, dashedLine, line, radii } from "../components/LoisDesNorms/tokens";
+import { bevel, caps, colors, fonts, goldFrame } from "../components/LoisDesNorms/tokens";
 import { PLAYER_STATS_KEY } from "../components/LoisDesNorms/playerStats";
 
 const POLL_INTERVAL_MS = 3000;
@@ -26,30 +26,21 @@ const closeErrorMessage = (error: unknown): string => {
 
 const canClose = (lobby: LobbySummary) => !lobby.isDefault && !lobby.gameInProgress;
 
-const gridSx = {
-  display: "grid",
-  // Wide enough for three chairs a side with whole stat notes.
-  gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 520px), 1fr))",
-  columnGap: { xs: 2, md: 4 },
-  rowGap: { xs: 4, md: 5 },
-} as const;
+const ROWS = [0, 1, 2];
 
-const CHAIRS = [0, 1, 2];
-
-/** Placeholder table with the same shape as a real one. */
-const TileSkeleton = () => (
-  <Box sx={{ display: "grid", gap: 1.5 }}>
-    <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1, px: 1.5 }}>
-      {CHAIRS.map((i) => (
-        <Skeleton key={i} variant="rounded" height={26} />
-      ))}
-    </Box>
-    <Box sx={{ border: line(colors.inkRule), borderRadius: `${radii.panel + 2}px`, height: 112 }} />
-    <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1, px: 1.5 }}>
-      {CHAIRS.slice(1).map((i) => (
-        <Skeleton key={i} variant="rounded" height={26} />
-      ))}
-    </Box>
+/** Placeholder rows with the same height as real ones. */
+const RowsSkeleton = () => (
+  <Box aria-busy="true" aria-label="Loading lobbies">
+    {ROWS.map((i) => (
+      <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 2, px: 2, py: 1.5, borderBottom: `1px solid ${colors.rule}` }}>
+        <Skeleton variant="text" width="22%" sx={{ fontSize: "1rem" }} />
+        <Skeleton variant="circular" width={30} height={30} />
+        <Skeleton variant="circular" width={30} height={30} />
+        <Skeleton variant="text" width="20%" />
+        <Box sx={{ flex: 1 }} />
+        <Skeleton variant="rectangular" width={96} height={32} />
+      </Box>
+    ))}
   </Box>
 );
 
@@ -83,42 +74,26 @@ const LoisDesNormsLobbies = () => {
   }, [query.data, queryClient]);
 
   return (
-    <FeltScene>
+    <ClientScene>
       <Box
         component="header"
-        sx={{
-          display: "flex",
-          flexWrap: "wrap",
-          alignItems: "flex-end",
-          justifyContent: "space-between",
-          gap: 2,
-          mb: { xs: 3, md: 4 },
-        }}
+        sx={{ display: "flex", flexWrap: "wrap", alignItems: "flex-end", justifyContent: "space-between", gap: 2, mb: 2.5 }}
       >
         <Box>
-          <Typography variant="h1" component="h1" sx={{ fontSize: { xs: "2.125rem", md: "2.75rem" } }}>
+          <Typography variant="h1" component="h1" sx={{ fontSize: { xs: "1.75rem", md: "2.25rem" }, color: colors.cream }}>
             Lois des Norms
           </Typography>
-          <Typography sx={{ color: colors.inkSoft, mt: 1 }}>
-            {count === undefined
-              ? "Tables tonight"
-              : `${count} table${count === 1 ? "" : "s"} tonight`}
+          <Typography sx={{ fontFamily: fonts.mono, fontSize: "0.8125rem", color: colors.muted, mt: 0.75, letterSpacing: "0.04em" }}>
+            {count === undefined ? "CUSTOM LOBBIES" : `CUSTOM LOBBIES · ${count} OPEN`}
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          size="large"
-          startIcon={<AddRounded />}
-          onClick={() => setCreating(true)}
-        >
-          New lobby
+        <Button variant="contained" size="large" startIcon={<AddRounded />} onClick={() => setCreating(true)} sx={{ height: 48 }}>
+          Create lobby
         </Button>
       </Box>
 
-      <Box sx={{ display: "grid", gap: 2, mb: query.isError || remove.isError ? 3 : 0 }}>
-        {query.isError && (
-          <Alert severity="error">Could not load the tables: {apiErrorMessage(query.error)}</Alert>
-        )}
+      <Box sx={{ display: "grid", gap: 2, mb: query.isError || remove.isError ? 2.5 : 0 }}>
+        {query.isError && <Alert severity="error">Could not load the lobbies: {apiErrorMessage(query.error)}</Alert>}
         {remove.isError && (
           <Alert severity="error" onClose={() => remove.reset()}>
             {closeErrorMessage(remove.error)}
@@ -126,49 +101,32 @@ const LoisDesNormsLobbies = () => {
         )}
       </Box>
 
-      {query.isPending && (
-        <Box sx={gridSx} aria-busy="true" aria-label="Loading tables">
-          <TileSkeleton />
-          <TileSkeleton />
-          <TileSkeleton />
-        </Box>
-      )}
-      {query.data && query.data.length === 0 && (
-        <Box
-          sx={{
-            border: dashedLine(),
-            borderRadius: `${radii.panel}px`,
-            p: { xs: 3, md: 5 },
-            textAlign: "center",
-          }}
-        >
-          <Typography variant="h2" component="p">
-            No table is open
-          </Typography>
-          <Typography sx={{ color: colors.inkSoft, mt: 1 }}>
-            Start one with New lobby, then seat the group.
-          </Typography>
-        </Box>
-      )}
-      {query.data && query.data.length > 0 && (
-        <Box sx={gridSx}>
-          {query.data.map((lobby) => (
-            <LobbyCard
-              key={lobby.id}
-              lobby={lobby}
-              onClose={
-                canClose(lobby)
-                  ? () => {
-                      setCloseCandidate(lobby);
-                      setConfirmOpen(true);
-                    }
-                  : undefined
-              }
-              closing={remove.isPending && remove.variables === lobby.id}
-            />
-          ))}
-        </Box>
-      )}
+      {/* The custom-games browser: one framed table, gold rules between rows. */}
+      <Box component="section" aria-label="Lobbies" sx={{ ...goldFrame, boxShadow: bevel, backgroundColor: "rgba(10, 20, 40, 0.85)" }}>
+        <LobbyTableHead />
+        {query.isPending && <RowsSkeleton />}
+        {query.data && query.data.length === 0 && (
+          <Box sx={{ px: 2, py: 4, textAlign: "center" }}>
+            <Typography sx={{ ...caps, fontWeight: 700, color: colors.goldText }}>No lobby is open</Typography>
+            <Typography sx={{ color: colors.muted, mt: 1 }}>Create one, then seat the group.</Typography>
+          </Box>
+        )}
+        {query.data?.map((lobby) => (
+          <LobbyCard
+            key={lobby.id}
+            lobby={lobby}
+            onClose={
+              canClose(lobby)
+                ? () => {
+                    setCloseCandidate(lobby);
+                    setConfirmOpen(true);
+                  }
+                : undefined
+            }
+            closing={remove.isPending && remove.variables === lobby.id}
+          />
+        ))}
+      </Box>
 
       <NewLobbyDialog open={creating} onClose={() => setCreating(false)} />
       <ConfirmDialog
@@ -183,7 +141,7 @@ const LoisDesNormsLobbies = () => {
         }}
         onCancel={() => setConfirmOpen(false)}
       />
-    </FeltScene>
+    </ClientScene>
   );
 };
 

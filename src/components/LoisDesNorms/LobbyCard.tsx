@@ -1,13 +1,11 @@
-import { Box, Button, Typography, useMediaQuery } from "@mui/material";
-import CasinoOutlined from "@mui/icons-material/CasinoOutlined";
+import { Box, Button, Tooltip, Typography } from "@mui/material";
 import VisibilityOutlined from "@mui/icons-material/VisibilityOutlined";
 import { Link as RouterLink } from "react-router-dom";
 import { LobbySummary } from "../../api/loisDesNorms";
 import { lobbyPath, SEAT_COUNT } from "../../helpers/loisDesNorms";
-import Nameplate from "./Nameplate";
-import PlayMat from "./PlayMat";
+import { InitialDisc } from "./Nameplate";
 import { usePlayerStatNote } from "./playerStats";
-import { colors, line, radii } from "./tokens";
+import { caps, colors, fonts, visuallyHidden } from "./tokens";
 
 interface Props {
   lobby: LobbySummary;
@@ -16,134 +14,131 @@ interface Props {
   closing?: boolean;
 }
 
-const badgeSx = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 0.75,
-  flex: "none",
-  px: 1,
-  py: 0.5,
-  borderRadius: `${radii.badge}px`,
-  fontSize: "0.8125rem",
-  fontWeight: 600,
-  lineHeight: 1.2,
-  whiteSpace: "nowrap",
-} as const;
-
-/** Waiting, or the running loi's number and roll count. */
-export const StatusBadge = ({ lobby }: { lobby: Pick<LobbySummary, "gameInProgress" | "gameId" | "rollCount"> }) =>
-  lobby.gameInProgress ? (
-    <Box component="span" sx={{ ...badgeSx, border: line(colors.card), backgroundColor: colors.card, color: colors.cardInk }}>
-      <CasinoOutlined aria-hidden sx={{ fontSize: 16 }} />
-      LOI Nº {lobby.gameId} · roll {lobby.rollCount}
-    </Box>
-  ) : (
-    <Box component="span" sx={{ ...badgeSx, border: line(), color: colors.ink }}>
-      Waiting
-    </Box>
-  );
+/** Desktop column template of the lobby table; the header row uses it too. */
+const LOBBY_COLUMNS = "minmax(0, 1.3fr) minmax(0, 1.2fr) minmax(0, 1fr) 96px 188px";
 
 type Seat = { id: string; name?: string | null } | undefined;
 
-/** One chair: the same nameplate as everywhere, with the player's stat note. */
-const Chair = ({ player }: { player: Seat }) => {
+/** One seat of a lobby: the player's initial, with name and live stat note in its label and tooltip. */
+const SeatChip = ({ player }: { player: Seat }) => {
   const note = usePlayerStatNote(player?.id);
-  return player ? (
-    <Nameplate size="sm" name={player.name || player.id} note={note} reserveNote />
-  ) : (
-    <Nameplate size="sm" empty name="Open seat" reserveNote />
+  if (!player) {
+    return (
+      <li>
+        <InitialDisc empty />
+        <span style={visuallyHidden}>Open seat</span>
+      </li>
+    );
+  }
+  const name = player.name || player.id;
+  const label = note ? `${name}, ${note}` : name;
+  return (
+    <li>
+      <Tooltip title={label} disableInteractive>
+        <Box tabIndex={0} aria-label={label} sx={{ borderRadius: "50%", "&:focus-visible": { outline: `2px solid ${colors.cyan}`, outlineOffset: 2 } }}>
+          <InitialDisc name={player.name} />
+        </Box>
+      </Tooltip>
+    </li>
   );
 };
 
-/** A row of chairs along one side of the table. */
-const SeatRow = ({ seats, offset, side, perRow }: { seats: Seat[]; offset: number; side: "top" | "bottom"; perRow: 2 | 3 }) => (
-  <Box
-    component="ul"
-    sx={{
-      listStyle: "none",
-      m: 0,
-      px: 1.5,
-      display: "grid",
-      // Chairs on both long sides of the table; a short row is centred.
-      gridTemplateColumns: `repeat(${perRow * 2}, minmax(0, 1fr))`,
-      columnGap: 1,
-      rowGap: 1,
-      position: "relative",
-      zIndex: 1,
-      // The discs sit right against the table's edge.
-      ...(side === "top" ? { mb: "-4px" } : { mt: "-4px" }),
-    }}
+/** Status in the client's words: in game with the loi and reroll numbers, or waiting with the seat count. */
+const StatusText = ({ lobby, seated }: { lobby: Pick<LobbySummary, "gameInProgress" | "gameId" | "rollCount">; seated: number }) => (
+  <Typography
+    component="span"
+    sx={{ fontFamily: fonts.mono, fontSize: "0.8125rem", letterSpacing: "0.04em", color: lobby.gameInProgress ? colors.goldText : colors.muted }}
   >
-    {seats.map((player, i) => {
-      // Centre a row with fewer chairs than columns.
-      const lastRowStart = seats.length - (seats.length % perRow || perRow);
-      const lastRowCount = seats.length - lastRowStart;
-      const shift = i >= lastRowStart && lastRowCount < perRow ? perRow - lastRowCount : 0;
-      return (
-        <Box
-          component="li"
-          key={player?.id || `open-${offset + i}`}
-          sx={{
-            gridColumn: shift && i === lastRowStart ? `${1 + shift} / span 2` : "span 2",
-            minWidth: 0,
-          }}
-        >
-          <Chair player={player} />
-        </Box>
-      );
-    })}
-  </Box>
+    {lobby.gameInProgress
+      ? `IN GAME · LOI Nº ${lobby.gameId} · REROLL ${lobby.rollCount}`
+      : `WAITING · ${seated}/${SEAT_COUNT}`}
+  </Typography>
 );
 
-/** One table of the lobby list: a small mat with its five seats around it, then Open and Close. */
+/** One lobby in the custom-games table: name, seats, status, spectators, Join and Close. */
 const LobbyCard = ({ lobby, onClose, closing }: Props) => {
   // A Go nil slice arrives as null: treat it as no one seated.
   const seated = lobby.players ?? [];
   const seats = Array.from({ length: SEAT_COUNT }, (_, i) => seated[i]);
   const nameId = `lobby-${lobby.id}-name`;
-  // Phones: two chairs per row, so each nameplate keeps its stat note whole.
-  const roomy = useMediaQuery("(min-width: 600px)", { noSsr: true });
-  const perRow = roomy ? 3 : 2;
-  const near = roomy ? 3 : 2;
 
   return (
     <Box
       component="article"
       aria-labelledby={nameId}
-      aria-describedby={`${nameId}-seats`}
-      sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}
+      sx={{
+        display: "grid",
+        gridTemplateColumns: { xs: "minmax(0, 1fr) auto", md: LOBBY_COLUMNS },
+        gridTemplateAreas: {
+          xs: '"name viewers" "seats seats" "status status" "actions actions"',
+          md: '"name seats status viewers actions"',
+        },
+        alignItems: "center",
+        columnGap: 2,
+        rowGap: 1,
+        px: 2,
+        py: 1.5,
+        borderBottom: `1px solid ${colors.rule}`,
+        transition: "background-color 150ms",
+        "&:hover": { backgroundColor: "rgba(200, 170, 110, 0.05)" },
+      }}
     >
-      <span id={`${nameId}-seats`} hidden>
-        {`${seated.length} of ${SEAT_COUNT} seats taken`}
-      </span>
-      <SeatRow side="top" seats={seats.slice(0, near)} offset={0} perRow={perRow} />
-      <PlayMat small sx={{ minHeight: 112, display: "flex", flexDirection: "column", gap: 1.25, py: 2.25 }}>
-        <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1.5 }}>
-          <Typography id={nameId} variant="h2" component="h2" sx={{ overflowWrap: "anywhere", minWidth: 0 }}>
-            {lobby.name}
-          </Typography>
-          <StatusBadge lobby={lobby} />
-        </Box>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, color: colors.inkSoft, fontSize: "0.875rem", mt: "auto" }}>
-          <VisibilityOutlined aria-hidden sx={{ fontSize: 18 }} />
-          <span>
-            {seated.length}/{SEAT_COUNT} seated · {lobby.viewers} watching
-          </span>
-        </Box>
-      </PlayMat>
-      <SeatRow side="bottom" seats={seats.slice(near)} offset={near} perRow={perRow} />
-      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 0.5 }}>
+      <Typography id={nameId} variant="h2" component="h2" sx={{ gridArea: "name", overflowWrap: "anywhere", fontSize: "1rem", color: colors.cream }}>
+        {lobby.name}
+      </Typography>
+      <Box component="ul" aria-label={`Seats, ${seated.length} of ${SEAT_COUNT} taken`} sx={{ gridArea: "seats", listStyle: "none", m: 0, p: 0, display: "flex", gap: 0.75 }}>
+        {seats.map((player, i) => (
+          <SeatChip key={player?.id || `open-${i}`} player={player} />
+        ))}
+      </Box>
+      <Box sx={{ gridArea: "status" }}>
+        <StatusText lobby={lobby} seated={seated.length} />
+      </Box>
+      <Box
+        sx={{ gridArea: "viewers", display: "flex", alignItems: "center", gap: 0.75, fontFamily: fonts.mono, fontSize: "0.8125rem", color: colors.muted }}
+        aria-label={`${lobby.viewers} watching`}
+      >
+        <VisibilityOutlined aria-hidden sx={{ fontSize: 16 }} />
+        <span aria-hidden>{lobby.viewers}</span>
+      </Box>
+      <Box sx={{ gridArea: "actions", display: "flex", justifyContent: "flex-end", gap: 1 }}>
         {onClose && (
-          <Button variant="text" onClick={onClose} disabled={closing} aria-label={`Close ${lobby.name}`}>
+          <Button variant="text" size="small" onClick={onClose} disabled={closing} aria-label={`Close ${lobby.name}`}>
             Close
           </Button>
         )}
-        <Button variant="outlined" component={RouterLink} to={lobbyPath(lobby.id)} aria-label={`Open ${lobby.name}`}>
-          Open
+        <Button variant="contained" size="small" component={RouterLink} to={lobbyPath(lobby.id)} aria-label={`Join ${lobby.name}`} sx={{ minWidth: 96 }}>
+          Join
         </Button>
       </Box>
     </Box>
   );
 };
+
+/** Column titles of the lobby table (desktop only; each row names its own cells for screen readers). */
+export const LobbyTableHead = () => (
+  <Box
+    aria-hidden
+    sx={{
+      display: { xs: "none", md: "grid" },
+      gridTemplateColumns: LOBBY_COLUMNS,
+      columnGap: 2,
+      px: 2,
+      py: 1,
+      borderBottom: `1px solid ${colors.goldDark}`,
+      ...caps,
+      fontSize: "0.6875rem",
+      letterSpacing: "0.14em",
+      color: colors.muted,
+      fontWeight: 700,
+    }}
+  >
+    <span>Lobby</span>
+    <span>Seats</span>
+    <span>Status</span>
+    <span>Spectators</span>
+    <span />
+  </Box>
+);
 
 export default LobbyCard;

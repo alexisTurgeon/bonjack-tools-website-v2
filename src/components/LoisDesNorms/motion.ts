@@ -1,37 +1,34 @@
 import { keyframes } from "@mui/material/styles";
-import { colors, LINE, motion } from "./tokens";
+import { colors, FRAME, motion } from "./tokens";
 
-/** Token turning from its cardboard back to the champion face. */
-export const flipIn = keyframes`
-  from { transform: rotateY(180deg); }
-  to { transform: rotateY(0deg); }
+/** Gold flash running down the seat rows on a lock-in. */
+export const sweep = keyframes`
+  from { transform: translateY(-30%); opacity: 0; }
+  20% { opacity: 1; }
+  to { transform: translateY(330%); opacity: 0; }
 `;
 
-/** Token landing on its seat. */
-export const dropIn = keyframes`
-  from { transform: translateY(-22px) scale(1.08); opacity: 0; }
-  60% { opacity: 1; }
-  to { transform: translateY(0) scale(1); opacity: 1; }
+/** A portrait swapping to its new champion. */
+export const swapIn = keyframes`
+  from { transform: scale(1.12); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 `;
 
-/** Die rolling over before settling on its new face. */
-export const tumble = keyframes`
-  0% { transform: translateY(-16px) rotate(-220deg) scale(0.84); }
-  55% { transform: translateY(0) rotate(14deg) scale(1.05); }
-  78% { transform: translateY(0) rotate(-5deg) scale(0.99); }
-  100% { transform: translateY(0) rotate(0deg) scale(1); }
+/** Gold ring expanding off a portrait as it locks in. */
+export const ringPulse = keyframes`
+  from { transform: scale(1); opacity: 0.9; }
+  to { transform: scale(1.28); opacity: 0; }
 `;
 
-/** Text that arrives with its token. */
 export const fadeIn = keyframes`
   from { opacity: 0; }
   to { opacity: 1; }
 `;
 
-/** Reduced motion: a short ink ring instead of movement. */
+/** Reduced motion: a short gold outline instead of movement. */
 export const highlight = keyframes`
-  from { outline: ${LINE + 1}px solid ${colors.ink}; outline-offset: 4px; }
-  to { outline: ${LINE + 1}px solid transparent; outline-offset: 4px; }
+  from { outline: ${FRAME + 1}px solid ${colors.gold}; outline-offset: 3px; }
+  to { outline: ${FRAME + 1}px solid transparent; outline-offset: 3px; }
 `;
 
 export const REDUCED = "@media (prefers-reduced-motion: reduce)";
