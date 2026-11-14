@@ -19,8 +19,8 @@ const ROLE_IMAGES: Record<LeagueOfLegendsRole, string> = {
 interface Props {
   /** A player sits here. */
   seated: boolean;
-  role?: LeagueOfLegendsRole;
-  champion?: Champion;
+  role?: LeagueOfLegendsRole | null;
+  champion?: Champion | null;
   leagueVersion: string;
   /** Changes on every roll seen live; 0 means no roll seen since the page opened. */
   flipKey: number;
@@ -130,7 +130,7 @@ const ChampionFace = ({
 
 /** A seat's round token: printed spot when open, cardboard back when seated, champion after a roll. */
 const Token = ({ seated, role, champion, leagueVersion, flipKey, flipDelay, dropKey }: Props) => {
-  const rolled = seated && role !== undefined && champion !== undefined;
+  const rolled = seated && role != null && champion != null;
 
   if (!seated) {
     return (

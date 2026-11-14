@@ -31,7 +31,7 @@ const PlayerInfo = (props: PlayerInfoProperties) => {
   const { role, champion } = seat;
   const playerId = seat.player.id;
   const labelId = `seat-${index + 1}-label`;
-  const rolled = playerId !== "" && role !== undefined && champion !== undefined;
+  const rolled = playerId !== "" && role != null && champion != null;
 
   return (
     <Box

@@ -5,6 +5,7 @@ import HeadsetMicOutlined from "@mui/icons-material/HeadsetMicOutlined";
 import { Link as RouterLink, useParams } from "react-router-dom";
 import {
   DEFAULT_LOBBY_ID,
+  DEFAULT_ROLL_COOLDOWN_MS,
   emptyDiscordPlayer,
   emptyPlayer,
   LOBBY_LIST_PATH,
@@ -26,16 +27,8 @@ const MAX_RETRY_MS = 30_000;
 /** Close code the server uses right after lobbyNotFound. */
 const LOBBY_NOT_FOUND_CLOSE_CODE = 4404;
 
-/**
- * Production cooldown between rolls. Used as the track's full length only when
- * the page opened during a cooldown and never saw the roll that started it.
- */
-const ASSUMED_COOLDOWN_MS = 5 * 60_000;
-
 /** Server state plus what the page derives from how it changed. */
 interface PageState extends LoisDesNormsState {
-  /** Full length of the current cooldown: the first nextRollTimer after a roll seen live. */
-  cooldownTotalMs: number;
   /** Bumped on every roll seen live; drives the die and the token flips. */
   rollSeq: number;
   /** Per seat, bumped when a player is newly seated there; drives the token drop. */
@@ -59,7 +52,6 @@ const initialState = (lobbyId: string): PageState => ({
   discordGuildName: "",
   discordGuildChannel: "",
   leagueVersion: "",
-  cooldownTotalMs: 0,
   rollSeq: 0,
   seatDrops: Array.from({ length: SEAT_COUNT }, () => 0),
   announcement: "",
@@ -80,10 +72,17 @@ const rollAnnouncement = (state: LoisDesNormsState): string => {
   return `Loi number ${state.gameId}, roll ${state.rollCount}. ${draws.join(". ")}.`;
 };
 
+/** Server seats in the client's shape: always SEAT_COUNT seats, never a null player. */
+const normalizeSeats = (seats: Player[] | null | undefined): Player[] =>
+  Array.from({ length: SEAT_COUNT }, (_, i) => {
+    const seat = seats?.[i];
+    return seat ? { ...seat, player: seat.player ?? emptyDiscordPlayer() } : emptyPlayer();
+  });
+
 const reducer = (state: PageState, message: Message): PageState => {
   switch (message.action) {
     case "updatePlayers": {
-      const players = JSON.parse(message.content) as Player[];
+      const players = normalizeSeats(JSON.parse(message.content) as Player[]);
       return { ...state, players, seatDrops: nextSeatDrops(state, players, true) };
     }
     case "updateState": {
@@ -97,21 +96,20 @@ const reducer = (state: PageState, message: Message): PageState => {
         hadState &&
         newState.gameInProgress &&
         (newState.gameId !== state.gameId || newState.rollCount > state.rollCount);
-      let cooldownTotalMs = state.cooldownTotalMs;
-      if (rolled) cooldownTotalMs = timer;
-      else if (!hadState) cooldownTotalMs = Math.max(timer, ASSUMED_COOLDOWN_MS);
-      else if (timer > cooldownTotalMs) cooldownTotalMs = timer;
       const merged: LoisDesNormsState = {
         ...newState,
         // Additive fields: an older server leaves them out.
         lobbyId: newState.lobbyId ?? state.lobbyId,
         lobbyName: newState.lobbyName ?? "",
+        players: normalizeSeats(newState.players),
         nextRollAt: Date.now() + timer,
-        availablePlayers: { ...newState.availablePlayers, "": emptyDiscordPlayer() },
+        availablePlayers: {
+          ...Object.fromEntries(Object.entries(newState.availablePlayers ?? {}).filter(([, p]) => p != null)),
+          "": emptyDiscordPlayer(),
+        },
       };
       return {
         ...merged,
-        cooldownTotalMs,
         rollSeq: rolled ? state.rollSeq + 1 : state.rollSeq,
         // A roll replaces every seat's token; the flip shows it, not a drop.
         seatDrops: rolled ? state.seatDrops : nextSeatDrops(state, merged.players, hadState),
@@ -346,7 +344,7 @@ const LoisDesNormsLobby = ({ lobbyId }: { lobbyId: string }) => {
           canRoll={state.canRoll}
           nextRollTimer={state.nextRollTimer}
           nextRollAt={state.nextRollAt}
-          cooldownTotalMs={state.cooldownTotalMs}
+          cooldownTotalMs={state.rollCooldownMs ?? DEFAULT_ROLL_COOLDOWN_MS}
           rollSeq={state.rollSeq}
           seatDrops={state.seatDrops}
           leagueVersion={state.leagueVersion}
