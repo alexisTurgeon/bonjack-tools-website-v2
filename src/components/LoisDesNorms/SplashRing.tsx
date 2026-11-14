@@ -1,9 +1,10 @@
-import { useId, useState } from "react";
+import { useId } from "react";
 import { Box, ButtonBase, Typography } from "@mui/material";
 import { Player } from "../../helpers/loisDesNorms";
 import { ROLE_IMAGES, splashUrl, squareUrl, useChampionTitle } from "./champions";
-import { fadeIn, highlightAnimation, REDUCED } from "./motion";
-import { caps, colors, focusRing, fonts, goldFrame, motion, roleColors, sizes } from "./tokens";
+import CrossFadeImage from "./CrossFadeImage";
+import { highlightAnimation, REDUCED } from "./motion";
+import { caps, colors, focusRing, fonts, goldFrame, motion, roleColors, SHORT, sizes } from "./tokens";
 
 const C = 160;
 const point = (r: number, deg: number) => {
@@ -77,33 +78,7 @@ const EmptyEmblem = () => (
   </Box>
 );
 
-/** The focused splash inside the ring, cross-faded when the focus or the roll changes. */
-const CircleSplash = ({ url }: { url: string }) => {
-  const [settled, setSettled] = useState<string | undefined>(undefined);
-  // The fade starts once the new splash has loaded, so a slow download never blanks the ring.
-  const [loaded, setLoaded] = useState<string | undefined>(undefined);
-  const ready = loaded === url;
-  const imgSx = { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "50% 30%" } as const;
-  return (
-    <>
-      {settled && settled !== url && <Box component="img" src={settled} alt="" sx={imgSx} />}
-      <Box
-        component="img"
-        key={url}
-        src={url}
-        alt=""
-        onLoad={() => setLoaded(url)}
-        onAnimationEnd={() => setSettled(url)}
-        sx={{
-          ...imgSx,
-          opacity: ready ? 1 : 0,
-          animation: ready ? `${fadeIn} ${motion.crossFade}ms ease-out both` : "none",
-          [REDUCED]: { animation: "none" },
-        }}
-      />
-    </>
-  );
-};
+const ringImgSx = { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "50% 30%" } as const;
 
 interface Props {
   players: Player[];
@@ -123,7 +98,7 @@ const SplashRing = ({ players, leagueVersion, focusIndex, onFocus, rollSeq }: Pr
 
   return (
     <Box component="section" aria-label="Focused champion" sx={{ display: "grid", justifyItems: "center", gap: 1, textAlign: "center" }}>
-      <Box sx={{ position: "relative", width: { xs: sizes.ringCompact, md: sizes.ring }, aspectRatio: "1" }}>
+      <Box sx={{ position: "relative", width: { xs: sizes.ringCompact, md: sizes.ring }, aspectRatio: "1", [SHORT]: { width: sizes.ringShort } }}>
         <Box
           sx={{
             position: "absolute",
@@ -138,7 +113,7 @@ const SplashRing = ({ players, leagueVersion, focusIndex, onFocus, rollSeq }: Pr
         >
           {/* The emblem stays underneath, so the ring is never blank while a splash downloads. */}
           <EmptyEmblem />
-          {champion && <CircleSplash url={splashUrl(champion)} />}
+          {champion && <CrossFadeImage url={splashUrl(champion)} imgSx={ringImgSx} />}
         </Box>
         <RingFrame />
         {rollSeq > 0 && champion && (

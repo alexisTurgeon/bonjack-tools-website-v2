@@ -1,7 +1,7 @@
 import { Box, Typography } from "@mui/material";
 import Countdown from "react-countdown";
 import { REDUCED, refill } from "./motion";
-import { caps, colors } from "./tokens";
+import { caps, colors, SHORT } from "./tokens";
 
 interface Props {
   gameInProgress: boolean;
@@ -39,7 +39,7 @@ const Face = ({ big, caption, fraction, tone }: { big: string; caption: string; 
       <Bar fraction={fraction} side="left" />
       <Typography
         component="span"
-        sx={{ ...caps, fontWeight: 700, fontSize: "2.5rem", lineHeight: 1, minWidth: "3ch", textAlign: "center", color: tone, fontVariantNumeric: "tabular-nums" }}
+        sx={{ ...caps, fontWeight: 700, fontSize: "2.5rem", lineHeight: 1, minWidth: "3ch", textAlign: "center", color: tone, fontVariantNumeric: "tabular-nums", [SHORT]: { fontSize: "2rem" } }}
       >
         {big}
       </Typography>

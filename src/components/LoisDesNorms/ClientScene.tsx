@@ -1,16 +1,19 @@
-import { ReactNode, useState } from "react";
+import { ReactNode } from "react";
 import { Box, GlobalStyles } from "@mui/material";
 import { ThemeProvider } from "@mui/material/styles";
-import { fadeIn, REDUCED } from "./motion";
+import CrossFadeImage from "./CrossFadeImage";
 import { ldnTheme } from "./theme";
-import { colors, motion, sizes } from "./tokens";
+import { colors, sizes } from "./tokens";
 
 /**
- * While these pages are mounted: the site's fixed footer keeps its look but
- * gets the page's ground and cream text so it stays legible, and #root drops
- * its footer gap (the scene keeps its own, at least the footer's height).
+ * While these pages are mounted: the body takes the page's ground, the site's
+ * fixed footer keeps its look but gets that ground and cream text so it stays
+ * legible, and #root drops its footer gap (the scene keeps its own, at least
+ * the footer's height).
  */
 const footerStyles = {
+  // The page ground behind everything, so no light band shows below or around the scene.
+  body: { backgroundColor: colors.void },
   "#root": { paddingBottom: 0 },
   ".footer": { backgroundColor: colors.void, color: colors.cream },
   ".footer .MuiTypography-root": { color: colors.cream },
@@ -28,40 +31,19 @@ const layerSx = {
 } as const;
 
 /** The focused champion's splash behind everything, cross-faded when it changes. */
-const SplashGround = ({ url }: { url: string }) => {
-  // The splash already faded in; it stays underneath while the next one fades in over it.
-  const [settled, setSettled] = useState<string | undefined>(undefined);
-  // The fade starts once the new splash has loaded, so a slow download never blanks the ground.
-  const [loaded, setLoaded] = useState<string | undefined>(undefined);
-  const ready = loaded === url;
-  return (
-    <Box aria-hidden sx={{ position: "absolute", inset: 0, zIndex: 0, overflow: "hidden" }}>
-      {settled && settled !== url && <Box component="img" src={settled} alt="" sx={layerSx} />}
-      <Box
-        component="img"
-        key={url}
-        src={url}
-        alt=""
-        onLoad={() => setLoaded(url)}
-        onAnimationEnd={() => setSettled(url)}
-        sx={{
-          ...layerSx,
-          opacity: ready ? 1 : 0,
-          animation: ready ? `${fadeIn} ${motion.crossFade}ms ease-out both` : "none",
-          [REDUCED]: { animation: "none" },
-        }}
-      />
-      {/* Vignette into the blue-black ground. */}
-      <Box
-        sx={{
-          position: "absolute",
-          inset: 0,
-          background: `radial-gradient(ellipse 75% 70% at 50% 40%, rgba(1, 10, 19, 0.15) 0%, rgba(1, 10, 19, 0.75) 70%, ${colors.void} 100%)`,
-        }}
-      />
-    </Box>
-  );
-};
+const SplashGround = ({ url }: { url: string }) => (
+  <Box aria-hidden sx={{ position: "absolute", inset: 0, zIndex: 0, overflow: "hidden" }}>
+    <CrossFadeImage url={url} imgSx={layerSx} />
+    {/* Vignette into the blue-black ground. */}
+    <Box
+      sx={{
+        position: "absolute",
+        inset: 0,
+        background: `radial-gradient(ellipse 75% 70% at 50% 40%, rgba(1, 10, 19, 0.15) 0%, rgba(1, 10, 19, 0.75) 70%, ${colors.void} 100%)`,
+      }}
+    />
+  </Box>
+);
 
 /** The champ-select ground: blue-black under the focused champion's blurred splash, with the pages' own theme. */
 const ClientScene = ({ children, splash }: { children: ReactNode; splash?: string }) => (

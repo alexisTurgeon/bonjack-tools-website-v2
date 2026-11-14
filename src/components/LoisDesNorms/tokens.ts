@@ -66,14 +66,23 @@ export const fonts = {
 /** Tracking for capital serif text. */
 export const caps = { fontFamily: fonts.display, textTransform: "uppercase", letterSpacing: "0.08em" } as const;
 
+/**
+ * Desktop windows shorter than 900px (a 1280x800 laptop): rows, ring and log
+ * tighten so every control stays above the site's fixed footer.
+ */
+export const SHORT = "@media (min-width: 1200px) and (max-height: 899.95px)";
+
 export const sizes = {
   /** Seat row portrait. */
   portrait: 92,
   portraitCompact: 72,
   seatRow: 104,
+  portraitShort: 74,
+  seatRowShort: 86,
   roleFrame: 36,
   /** Centre splash ring. */
   ring: 300,
+  ringShort: 228,
   ringCompact: 220,
   thumb: 48,
   benchSquare: 34,

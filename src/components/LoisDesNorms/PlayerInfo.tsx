@@ -5,7 +5,7 @@ import { ROLE_IMAGES, squareUrl } from "./champions";
 import Nameplate from "./Nameplate";
 import { usePlayerStatNote } from "./playerStats";
 import { highlightAnimation, REDUCED, ringPulse, swapIn } from "./motion";
-import { bevel, caps, colors, focusRing, FRAME, goldFrame, motion, roleColors, sizes, visuallyHidden } from "./tokens";
+import { bevel, caps, colors, focusRing, FRAME, goldFrame, motion, roleColors, SHORT, sizes, visuallyHidden } from "./tokens";
 
 export interface PlayerInfoProperties {
   index: number;
@@ -72,6 +72,10 @@ const PlayerInfo = (props: PlayerInfoProperties) => {
         columnGap: { xs: 1.5, sm: 2 },
         // Same height empty, seated or locked in.
         height: { xs: 92, sm: sizes.seatRow },
+        [SHORT]: {
+          height: sizes.seatRowShort,
+          gridTemplateColumns: `${sizes.roleFrame}px ${sizes.portraitShort}px minmax(0, 1fr)`,
+        },
         px: 0.5,
         cursor: rolled ? "pointer" : "default",
         backgroundColor: focused ? "rgba(200, 170, 110, 0.07)" : "transparent",
@@ -101,7 +105,7 @@ const PlayerInfo = (props: PlayerInfoProperties) => {
       </Box>
 
       {/* Portrait in its gold ring, with the swap badge (the player picker). */}
-      <Box sx={{ position: "relative", width: portraitSize, height: portraitSize }}>
+      <Box sx={{ position: "relative", width: portraitSize, height: portraitSize, [SHORT]: { width: sizes.portraitShort, height: sizes.portraitShort } }}>
         <ButtonBase
           disabled={!rolled}
           onClick={(e) => {

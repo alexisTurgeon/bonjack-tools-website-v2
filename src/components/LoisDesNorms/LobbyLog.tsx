@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Box } from "@mui/material";
-import { colors, fonts } from "./tokens";
+import { colors, fonts, SHORT } from "./tokens";
 
 export interface LogEntry {
   id: number;
@@ -27,6 +27,7 @@ const LobbyLog = ({ entries }: { entries: LogEntry[] }) => {
       aria-label="Lobby log"
       sx={{
         height: { xs: 132, md: 96 },
+        [SHORT]: { height: 70 },
         border: `1px solid ${colors.rule}`,
         backgroundColor: "rgba(1, 10, 19, 0.72)",
       }}

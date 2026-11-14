@@ -25,7 +25,7 @@ import RollTimer from "../components/LoisDesNorms/RollTimer";
 import SplashRing from "../components/LoisDesNorms/SplashRing";
 import VoiceBench from "../components/LoisDesNorms/VoiceBench";
 import { splashUrl } from "../components/LoisDesNorms/champions";
-import { caps, colors, fonts, sizes, visuallyHidden } from "../components/LoisDesNorms/tokens";
+import { caps, colors, fonts, SHORT, sizes, visuallyHidden } from "../components/LoisDesNorms/tokens";
 import { PLAYER_STATS_KEY } from "../components/LoisDesNorms/playerStats";
 
 type Message = { action: MessageActions; content: string };
@@ -208,6 +208,8 @@ const LoisDesNormsLobby = ({ lobbyId }: { lobbyId: string }) => {
   const queryClient = useQueryClient();
   const wide = useMediaQuery(WIDE, { noSsr: true });
   const [userFocus, setUserFocus] = useState<number | null>(null);
+  // Rules or stats; kept here so it survives the layout switching at the wide breakpoint.
+  const [infoTab, setInfoTab] = useState(0);
 
   // The server records a game's stats when it ends; refetch every nameplate's.
   useEffect(() => {
@@ -400,10 +402,14 @@ const LoisDesNormsLobby = ({ lobbyId }: { lobbyId: string }) => {
               {lobbyName}
             </Typography>
           )}
-          <Typography sx={{ fontFamily: fonts.mono, fontSize: "0.75rem", color: colors.muted, mt: 0.5, letterSpacing: "0.04em" }}>
-            {`PATCH ${state.leagueVersion || "—"}`}
-            {state.gameInProgress ? ` · REROLL ${state.rollCount}` : ""}
-          </Typography>
+          {/* Only what the server sent: no patch before the first roll, no reroll outside a game. */}
+          {(state.leagueVersion || state.gameInProgress) && (
+            <Typography sx={{ fontFamily: fonts.mono, fontSize: "0.75rem", color: colors.muted, mt: 0.5, letterSpacing: "0.04em" }}>
+              {[state.leagueVersion && `PATCH ${state.leagueVersion}`, state.gameInProgress && `REROLL ${state.rollCount}`]
+                .filter(Boolean)
+                .join(" · ")}
+            </Typography>
+          )}
         </Box>
       ) : (
         <Box sx={{ mt: 1, width: 240 }}>
@@ -444,7 +450,7 @@ const LoisDesNormsLobby = ({ lobbyId }: { lobbyId: string }) => {
         size="large"
         onClick={roll}
         disabled={!loaded || !state.canRoll}
-        sx={{ minWidth: 260, height: 52, fontSize: "1.0625rem" }}
+        sx={{ minWidth: 260, height: 52, fontSize: "1.0625rem", [SHORT]: { height: 44 } }}
       >
         {coolingDown ? (
           <Countdown
@@ -500,7 +506,16 @@ const LoisDesNormsLobby = ({ lobbyId }: { lobbyId: string }) => {
     />
   ) : null;
 
-  const rules = loaded ? <AdditionalInformationBlock availablePlayers={state.availablePlayers} /> : null;
+  const seatedIds = state.players.map((seat) => seat.player.id).filter((id) => id !== "");
+  const rules = loaded ? (
+    <AdditionalInformationBlock
+      availablePlayers={state.availablePlayers}
+      seatedIds={seatedIds}
+      fill={wide}
+      tab={infoTab}
+      onTabChange={setInfoTab}
+    />
+  ) : null;
   const log = <LobbyLog entries={state.log} />;
 
   const cell = (area: string, node: ReactNode, sx: object = {}) => <Box sx={{ gridArea: area, minWidth: 0, ...sx }}>{node}</Box>;
@@ -518,6 +533,7 @@ const LoisDesNormsLobby = ({ lobbyId }: { lobbyId: string }) => {
             gridTemplateAreas: '"title top meta" "seats center rules" "log action quit"',
             columnGap: 4,
             rowGap: 1.5,
+            [SHORT]: { rowGap: 1 },
             alignItems: "start",
           }}
         >
@@ -526,7 +542,8 @@ const LoisDesNormsLobby = ({ lobbyId }: { lobbyId: string }) => {
           {cell("meta", meta, { alignSelf: "start", pt: 0.5 })}
           {cell("seats", seats)}
           {cell("center", center, { alignSelf: "center" })}
-          {cell("rules", rules)}
+          {/* The panel fills this cell and scrolls inside it, so a long ledger never pushes the page. */}
+          {cell("rules", rules, { position: "relative", alignSelf: "stretch" })}
           {cell("log", log, { alignSelf: "end" })}
           {cell("action", action, { alignSelf: "center" })}
           {cell("quit", quit, { alignSelf: "center" })}
