@@ -1,7 +1,7 @@
 import { Box, Link, Typography } from "@mui/material";
 import { useQueries } from "@tanstack/react-query";
 import { Link as RouterLink } from "react-router-dom";
-import { AvailablePlayers, PlayerStats, statNote, winRate } from "../../helpers/loisDesNorms";
+import { AvailablePlayers, PlayerStats, winRate } from "../../helpers/loisDesNorms";
 import Nameplate from "./Nameplate";
 import { playerStatsQuery, statsOf } from "./playerStats";
 import { caps, colors, fonts, visuallyHidden } from "./tokens";
@@ -11,6 +11,9 @@ const numberSx = { ...cellSx, textAlign: "right", fontFamily: fonts.mono, fontVa
 const headSx = { ...caps, fontSize: "0.6875rem", letterSpacing: "0.12em", color: colors.muted, fontWeight: 700, borderBottom: `1px solid ${colors.goldDark}` } as const;
 
 type Row = { id: string; name: string; stats: PlayerStats };
+
+/** Win rate, or a dash when nothing has been rolled yet: no rolls is not a 0% win rate. */
+const rate = (stats: PlayerStats) => (stats.totalRoll === 0 ? "—" : `${winRate(stats).toFixed(1)}%`);
 
 const PlayerRow = ({ row }: { row: Row }) => (
   <tr>
@@ -23,12 +26,11 @@ const PlayerRow = ({ row }: { row: Row }) => (
             {row.name}
           </Link>
         }
-        note={statNote(row.stats)}
       />
     </Box>
     <Box component="td" sx={numberSx}>{row.stats.numberOfGame}</Box>
     <Box component="td" sx={numberSx}>{row.stats.totalRoll}</Box>
-    <Box component="td" sx={numberSx}>{winRate(row.stats).toFixed(1)}%</Box>
+    <Box component="td" sx={numberSx}>{rate(row.stats)}</Box>
   </tr>
 );
 
@@ -91,7 +93,7 @@ const Stats = (props: { availablePlayers: AvailablePlayers; seatedIds: string[] 
             </Box>
             <Box component="td" sx={totalSx}>{team.numberOfGame}</Box>
             <Box component="td" sx={totalSx}>{team.totalRoll}</Box>
-            <Box component="td" sx={totalSx}>{winRate(team).toFixed(1)}%</Box>
+            <Box component="td" sx={totalSx}>{rate(team)}</Box>
           </tr>
         </tbody>
       )}

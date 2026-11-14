@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Box } from "@mui/material";
-import { colors, fonts, SHORT } from "./tokens";
+import { bevel, colors, fonts, goldFrame, SHORT } from "./tokens";
 
 export interface LogEntry {
   id: number;
@@ -28,7 +28,9 @@ const LobbyLog = ({ entries }: { entries: LogEntry[] }) => {
       sx={{
         height: { xs: 132, md: 96 },
         [SHORT]: { height: 70 },
-        border: `1px solid ${colors.rule}`,
+        // The one gold frame, like the client's lobby chat.
+        ...goldFrame,
+        boxShadow: bevel,
         backgroundColor: "rgba(1, 10, 19, 0.72)",
       }}
     >

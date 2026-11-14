@@ -4,7 +4,7 @@ import { Player } from "../../helpers/loisDesNorms";
 import { ROLE_IMAGES, splashUrl, squareUrl, useChampionTitle } from "./champions";
 import CrossFadeImage from "./CrossFadeImage";
 import { highlightAnimation, REDUCED } from "./motion";
-import { caps, colors, focusRing, fonts, goldFrame, motion, roleColors, SHORT, sizes } from "./tokens";
+import { caps, colors, focusRing, fonts, goldFrame, motion, SHORT, sizes } from "./tokens";
 
 const C = 160;
 const point = (r: number, deg: number) => {
@@ -135,7 +135,7 @@ const SplashRing = ({ players, leagueVersion, focusIndex, onFocus, rollSeq }: Pr
           </Typography>
           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0.75, mt: 0.5, fontSize: "0.875rem" }}>
             {role && <Box component="img" src={ROLE_IMAGES[role]} alt="" sx={{ width: 18, height: 18 }} />}
-            {role && <Box component="span" sx={{ fontWeight: 700, letterSpacing: "0.06em", color: roleColors[role] }}>{role}</Box>}
+            {role && <Box component="span" sx={{ fontWeight: 700, letterSpacing: "0.06em", color: colors.cream }}>{role}</Box>}
             <Box component="span" sx={{ color: colors.muted }}>· {focused.player.name ?? "Unnamed player"}</Box>
           </Box>
         </Box>
@@ -145,7 +145,7 @@ const SplashRing = ({ players, leagueVersion, focusIndex, onFocus, rollSeq }: Pr
             Waiting for the roll
           </Typography>
           <Typography component="p" sx={{ fontSize: "0.875rem", color: colors.muted, mt: 0.5 }}>
-            Seat the team, then start the loi.
+            Seat players, then start the loi.
           </Typography>
         </Box>
       )}

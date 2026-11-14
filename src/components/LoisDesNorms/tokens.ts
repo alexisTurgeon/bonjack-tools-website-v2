@@ -1,5 +1,4 @@
 import type { CSSProperties } from "react";
-import { LeagueOfLegendsRole } from "../../helpers/loisDesNorms";
 
 /** Design tokens of the Lois des Norms pages. Their colours, frame, fonts and sizes all come from here. */
 export const colors = {
@@ -32,15 +31,6 @@ export const colors = {
   shadow: "rgba(0, 4, 10, 0.6)",
 } as const;
 
-/** Used on role frames and role labels only. */
-export const roleColors: Record<LeagueOfLegendsRole, string> = {
-  TOP: "#7EB6F2",
-  JUNGLE: "#A9D45F",
-  MID: "#C59BF5",
-  ADC: "#F69B93",
-  SUPPORT: "#5ED6C8",
-};
-
 /** Width of every gold frame line, in px. */
 export const FRAME = 2;
 
@@ -50,8 +40,8 @@ export const goldFrame = {
   borderImage: `linear-gradient(180deg, ${colors.gold}, ${colors.goldDark}) 1`,
 } as const;
 
-/** The one bevel: a dark inner line and a faint light line along the top edge. */
-export const bevel = `inset 0 0 0 1px ${colors.void}, inset 0 2px 0 rgba(240, 230, 210, 0.08)`;
+/** The one bevel: a dark-gold inner line inside the frame and a light catch along the top edge. */
+export const bevel = `inset 0 0 0 1px rgba(120, 90, 40, 0.65), inset 0 2px 0 rgba(240, 230, 210, 0.2)`;
 
 export const fonts = {
   /** Tracked capital serif: names, headings, the timer. */
@@ -78,7 +68,7 @@ export const sizes = {
   portraitCompact: 72,
   seatRow: 104,
   portraitShort: 74,
-  seatRowShort: 86,
+  seatRowShort: 92,
   roleFrame: 36,
   /** Centre splash ring. */
   ring: 300,
@@ -86,6 +76,8 @@ export const sizes = {
   ringCompact: 220,
   thumb: 48,
   benchSquare: 34,
+  /** Phone width: ten squares fit on one row. */
+  benchSquareCompact: 30,
   disc: 30,
   discSmall: 26,
   leftColumn: 380,

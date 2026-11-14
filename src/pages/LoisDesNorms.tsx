@@ -427,6 +427,7 @@ const LoisDesNormsLobby = ({ lobbyId }: { lobbyId: string }) => {
     </Box>
   ) : null;
 
+  const seatedCount = state.players.filter((seat) => seat.player.id !== "").length;
   const top = loaded ? (
     <Box sx={{ display: "grid", gap: 1.5 }}>
       <VoiceBench availablePlayers={state.availablePlayers} players={state.players} channel={state.discordGuildChannel} />
@@ -436,6 +437,7 @@ const LoisDesNormsLobby = ({ lobbyId }: { lobbyId: string }) => {
         nextRollTimer={state.nextRollTimer}
         nextRollAt={state.nextRollAt}
         cooldownTotalMs={cooldownTotalMs}
+        seatedCount={seatedCount}
       />
     </Box>
   ) : (
@@ -449,7 +451,8 @@ const LoisDesNormsLobby = ({ lobbyId }: { lobbyId: string }) => {
         variant="contained"
         size="large"
         onClick={roll}
-        disabled={!loaded || !state.canRoll}
+        // A loi with nobody seated would record an empty game.
+        disabled={!loaded || !state.canRoll || (!state.gameInProgress && seatedCount === 0)}
         sx={{ minWidth: 260, height: 52, fontSize: "1.0625rem", [SHORT]: { height: 44 } }}
       >
         {coolingDown ? (

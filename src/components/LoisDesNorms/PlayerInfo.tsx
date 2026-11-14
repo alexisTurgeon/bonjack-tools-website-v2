@@ -5,7 +5,7 @@ import { ROLE_IMAGES, squareUrl } from "./champions";
 import Nameplate from "./Nameplate";
 import { usePlayerStatNote } from "./playerStats";
 import { highlightAnimation, REDUCED, ringPulse, swapIn } from "./motion";
-import { bevel, caps, colors, focusRing, FRAME, goldFrame, motion, roleColors, SHORT, sizes, visuallyHidden } from "./tokens";
+import { bevel, caps, colors, focusRing, FRAME, goldFrame, motion, SHORT, sizes, visuallyHidden } from "./tokens";
 
 export interface PlayerInfoProperties {
   index: number;
@@ -267,7 +267,8 @@ const PlayerInfo = (props: PlayerInfoProperties) => {
             letterSpacing: "0.06em",
             lineHeight: 1.4,
             minHeight: "1.4em",
-            color: rolled ? roleColors[role] : "transparent",
+            // The framed role icon identifies the role; the label stays in the muted text tone.
+            color: rolled ? colors.muted : "transparent",
           }}
         >
           {rolled ? role : " "}

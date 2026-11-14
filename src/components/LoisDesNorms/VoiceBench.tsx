@@ -20,7 +20,7 @@ const VoiceBench = ({ availablePlayers, players, channel }: Props) => {
       <BracketTitle id="voice-bench-title">In voice{channel ? ` · ${channel}` : ""}</BracketTitle>
       <Box
         component="ul"
-        sx={{ listStyle: "none", m: 0, mt: 1, p: 0, display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 0.75 }}
+        sx={{ listStyle: "none", m: 0, mt: 1, p: 0, display: "flex", flexWrap: "wrap", justifyContent: "center", gap: { xs: 0.5, sm: 0.75 } }}
       >
         {pool.length === 0 && (
           <Box component="li" sx={{ color: colors.muted, fontSize: "0.875rem" }}>
@@ -45,8 +45,8 @@ const VoiceBench = ({ availablePlayers, players, channel }: Props) => {
                 tabIndex={0}
                 sx={{
                   position: "relative",
-                  width: sizes.benchSquare,
-                  height: sizes.benchSquare,
+                  width: { xs: sizes.benchSquareCompact, sm: sizes.benchSquare },
+                  height: { xs: sizes.benchSquareCompact, sm: sizes.benchSquare },
                   display: "grid",
                   placeItems: "center",
                   fontFamily: fonts.display,

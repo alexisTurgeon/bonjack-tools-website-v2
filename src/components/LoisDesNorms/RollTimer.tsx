@@ -12,6 +12,8 @@ interface Props {
   nextRollAt: number;
   /** Full length of the cooldown between two rolls, in ms. */
   cooldownTotalMs: number;
+  /** Players seated in this lobby, shown before the game starts. */
+  seatedCount: number;
 }
 
 /** One cyan bar; its fill shrinks toward the number as the cooldown runs out. */
@@ -52,7 +54,21 @@ const Face = ({ big, caption, fraction, tone }: { big: string; caption: string; 
 );
 
 /** The champ-select timer: seconds to the next reroll, flanked by cyan bars showing the real share left. */
-const RollTimer = ({ gameInProgress, canRoll, nextRollTimer, nextRollAt, cooldownTotalMs }: Props) => {
+const RollTimer = ({ gameInProgress, canRoll, nextRollTimer, nextRollAt, cooldownTotalMs, seatedCount }: Props) => {
+  // Before a game: the seat count, and READY only once the loi can really start.
+  if (!gameInProgress && (canRoll || nextRollTimer <= 0)) {
+    const canStart = canRoll && seatedCount > 0;
+    return (
+      <Box role="status" aria-label={`${seatedCount} of 5 seated${canStart ? ", ready to start" : ""}`}>
+        <Face
+          big={`${seatedCount}/5`}
+          caption={seatedCount === 0 ? "Seat players to start" : canStart ? "Seated · ready to start" : "Seated"}
+          fraction={0}
+          tone={canStart ? colors.cyan : colors.muted}
+        />
+      </Box>
+    );
+  }
   if (!canRoll && nextRollTimer > 0) {
     return (
       <Countdown

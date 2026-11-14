@@ -57,13 +57,21 @@ export const ldnTheme = createTheme({
         containedPrimary: {
           ...goldFrame,
           backgroundColor: colors.navy,
+          // A slight vertical fill, lit from the top like the client's buttons.
+          backgroundImage: `linear-gradient(180deg, ${colors.navyRaised}, ${colors.navy})`,
           color: colors.goldText,
           boxShadow: bevel,
-          "&:hover": { backgroundColor: colors.navyRaised, color: colors.cream, boxShadow: bevel },
+          "&:hover": {
+            backgroundColor: colors.navyRaised,
+            backgroundImage: `linear-gradient(180deg, #16294A, ${colors.navyRaised})`,
+            color: colors.cream,
+            boxShadow: bevel,
+          },
           "&.Mui-disabled": {
             ...goldFrame,
             borderImage: `linear-gradient(180deg, ${colors.goldDark}, rgba(120, 90, 40, 0.4)) 1`,
             backgroundColor: colors.void,
+            backgroundImage: "none",
             color: colors.muted,
           },
         },

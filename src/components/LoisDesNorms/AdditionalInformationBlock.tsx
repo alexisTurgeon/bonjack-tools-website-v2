@@ -30,7 +30,23 @@ const AdditionalInformationBlock = ({ tab, onTabChange: setTab, ...props }: Prop
         <Tab id="rules" label="Rules" value={0} aria-controls="rules-panel" />
         <Tab id="stats" label="Stats" value={1} aria-controls="stats-panel" />
       </Tabs>
-      <Box sx={props.fill ? { flex: 1, minHeight: 0, overflowY: "auto", pr: 0.5 } : undefined}>
+      <Box
+        sx={
+          props.fill
+            ? {
+                flex: 1,
+                minHeight: 0,
+                overflowY: "auto",
+                pr: 0.5,
+                // A visible scroll cue: a gold scrollbar and the last rows fading out, with room to scroll them clear.
+                pb: 4,
+                scrollbarWidth: "thin",
+                scrollbarColor: `${colors.goldDark} transparent`,
+                maskImage: "linear-gradient(to bottom, #000 calc(100% - 32px), transparent)",
+              }
+            : undefined
+        }
+      >
         <div id="rules-panel" role="tabpanel" aria-labelledby="rules" hidden={tab !== 0}>
           <Rules />
         </div>
