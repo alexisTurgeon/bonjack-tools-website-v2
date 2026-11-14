@@ -2,7 +2,7 @@ import { Box, Tooltip } from "@mui/material";
 import LockRounded from "@mui/icons-material/LockRounded";
 import { AvailablePlayers, initialOf, Player } from "../../helpers/loisDesNorms";
 import { BracketTitle } from "./Frames";
-import { colors, fonts, goldFrame, sizes } from "./tokens";
+import { colors, fonts, goldFrame, sizes, visuallyHidden } from "./tokens";
 
 interface Props {
   availablePlayers: AvailablePlayers;
@@ -43,7 +43,6 @@ const VoiceBench = ({ availablePlayers, players, channel }: Props) => {
               <Box
                 component="li"
                 tabIndex={0}
-                aria-label={`${name}, ${state}`}
                 sx={{
                   position: "relative",
                   width: sizes.benchSquare,
@@ -60,7 +59,8 @@ const VoiceBench = ({ availablePlayers, players, channel }: Props) => {
                   "&:focus-visible": { outline: `2px solid ${colors.cyan}`, outlineOffset: 2 },
                 }}
               >
-                {initialOf(player.name)}
+                <span aria-hidden>{initialOf(player.name)}</span>
+                <span style={visuallyHidden}>{`${name}, ${state}`}</span>
                 {elsewhere?.gameInProgress && !here && (
                   <Box
                     aria-hidden

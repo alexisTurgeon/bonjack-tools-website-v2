@@ -251,9 +251,12 @@ const PlayerInfo = (props: PlayerInfoProperties) => {
           {rolled ? champion.name : seated ? "Awaiting roll" : "Open seat"}
         </Typography>
         <Typography
+          key={`role-label-${swapKey}`}
           component="span"
           sx={{
             display: "block",
+            animation: animate ? `${swapIn} ${motion.swap}ms ${motion.easeOut} ${swapDelay}ms both` : "none",
+            [REDUCED]: { animation: "none" },
             fontFamily: "inherit",
             fontWeight: 700,
             fontSize: "0.875rem",

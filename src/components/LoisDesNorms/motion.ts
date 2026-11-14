@@ -20,6 +20,11 @@ export const ringPulse = keyframes`
   to { transform: scale(1.28); opacity: 0; }
 `;
 
+/** Timer bar filling up to its current length when a cooldown starts. */
+export const refill = keyframes`
+  from { transform: scaleX(0); }
+`;
+
 export const fadeIn = keyframes`
   from { opacity: 0; }
   to { opacity: 1; }

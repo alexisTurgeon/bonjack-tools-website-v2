@@ -376,11 +376,29 @@ const LoisDesNormsLobby = ({ lobbyId }: { lobbyId: string }) => {
       <BackLink />
       {loaded ? (
         <Box sx={{ mt: 1 }}>
-          <Typography variant="h1" component="h1" sx={{ fontSize: { xs: "1.625rem", md: "2rem" }, overflowWrap: "anywhere", color: state.gameInProgress ? colors.goldText : colors.cream }}>
+          <Typography
+            variant="h1"
+            component="h1"
+            title={state.gameInProgress ? undefined : lobbyName}
+            sx={{
+              // A long lobby name steps down and stops at two lines, so the seats stay in the first viewport.
+              fontSize: state.gameInProgress
+                ? { xs: "1.625rem", md: "2rem" }
+                : { xs: "1.625rem", md: lobbyName.length > 26 ? "1.25rem" : lobbyName.length > 16 ? "1.5rem" : "2rem" },
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+              overflowWrap: "anywhere",
+              color: state.gameInProgress ? colors.goldText : colors.cream,
+            }}
+          >
             {state.gameInProgress ? `Loi Nº ${state.gameId}` : lobbyName}
           </Typography>
           {state.gameInProgress && (
-            <Typography sx={{ ...caps, fontSize: "0.875rem", color: colors.cream, mt: 0.5, overflowWrap: "anywhere" }}>{lobbyName}</Typography>
+            <Typography noWrap title={lobbyName} sx={{ ...caps, fontSize: "0.875rem", color: colors.cream, mt: 0.5 }}>
+              {lobbyName}
+            </Typography>
           )}
           <Typography sx={{ fontFamily: fonts.mono, fontSize: "0.75rem", color: colors.muted, mt: 0.5, letterSpacing: "0.04em" }}>
             {`PATCH ${state.leagueVersion || "—"}`}

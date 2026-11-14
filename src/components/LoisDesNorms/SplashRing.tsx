@@ -80,6 +80,9 @@ const EmptyEmblem = () => (
 /** The focused splash inside the ring, cross-faded when the focus or the roll changes. */
 const CircleSplash = ({ url }: { url: string }) => {
   const [settled, setSettled] = useState<string | undefined>(undefined);
+  // The fade starts once the new splash has loaded, so a slow download never blanks the ring.
+  const [loaded, setLoaded] = useState<string | undefined>(undefined);
+  const ready = loaded === url;
   const imgSx = { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "50% 30%" } as const;
   return (
     <>
@@ -89,8 +92,14 @@ const CircleSplash = ({ url }: { url: string }) => {
         key={url}
         src={url}
         alt=""
+        onLoad={() => setLoaded(url)}
         onAnimationEnd={() => setSettled(url)}
-        sx={{ ...imgSx, animation: `${fadeIn} ${motion.crossFade}ms ease-out both`, [REDUCED]: { animation: "none" } }}
+        sx={{
+          ...imgSx,
+          opacity: ready ? 1 : 0,
+          animation: ready ? `${fadeIn} ${motion.crossFade}ms ease-out both` : "none",
+          [REDUCED]: { animation: "none" },
+        }}
       />
     </>
   );
@@ -127,7 +136,9 @@ const SplashRing = ({ players, leagueVersion, focusIndex, onFocus, rollSeq }: Pr
             boxShadow: `inset 0 0 0 1px ${colors.void}`,
           }}
         >
-          {champion ? <CircleSplash url={splashUrl(champion)} /> : <EmptyEmblem />}
+          {/* The emblem stays underneath, so the ring is never blank while a splash downloads. */}
+          <EmptyEmblem />
+          {champion && <CircleSplash url={splashUrl(champion)} />}
         </Box>
         <RingFrame />
         {rollSeq > 0 && champion && (

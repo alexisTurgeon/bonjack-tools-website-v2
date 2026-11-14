@@ -1,6 +1,6 @@
 import { Box, Typography } from "@mui/material";
 import Countdown from "react-countdown";
-import { REDUCED } from "./motion";
+import { REDUCED, refill } from "./motion";
 import { caps, colors } from "./tokens";
 
 interface Props {
@@ -24,9 +24,10 @@ const Bar = ({ fraction, side }: { fraction: number; side: "left" | "right" }) =
         backgroundColor: colors.cyan,
         transformOrigin: side === "left" ? "right center" : "left center",
         transform: `scaleX(${fraction})`,
-        // Countdown ticks once a second; glide between ticks (a new roll refills it the same way).
+        // A new cooldown fills the bar, then it glides between the once-a-second ticks.
+        animation: fraction > 0 ? `${refill} 600ms ease-out` : "none",
         transition: "transform 1s linear",
-        [REDUCED]: { transition: "none" },
+        [REDUCED]: { transition: "none", animation: "none" },
       }}
     />
   </Box>

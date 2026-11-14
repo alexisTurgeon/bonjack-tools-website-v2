@@ -35,8 +35,9 @@ const SeatChip = ({ player }: { player: Seat }) => {
   return (
     <li>
       <Tooltip title={label} disableInteractive>
-        <Box tabIndex={0} aria-label={label} sx={{ borderRadius: "50%", "&:focus-visible": { outline: `2px solid ${colors.cyan}`, outlineOffset: 2 } }}>
+        <Box tabIndex={0} sx={{ borderRadius: "50%", "&:focus-visible": { outline: `2px solid ${colors.cyan}`, outlineOffset: 2 } }}>
           <InitialDisc name={player.name} />
+          <span style={visuallyHidden}>{label}</span>
         </Box>
       </Tooltip>
     </li>
@@ -96,10 +97,10 @@ const LobbyCard = ({ lobby, onClose, closing }: Props) => {
       </Box>
       <Box
         sx={{ gridArea: "viewers", display: "flex", alignItems: "center", gap: 0.75, fontFamily: fonts.mono, fontSize: "0.8125rem", color: colors.muted }}
-        aria-label={`${lobby.viewers} watching`}
       >
         <VisibilityOutlined aria-hidden sx={{ fontSize: 16 }} />
         <span aria-hidden>{lobby.viewers}</span>
+        <span style={visuallyHidden}>{`${lobby.viewers} watching`}</span>
       </Box>
       <Box sx={{ gridArea: "actions", display: "flex", justifyContent: "flex-end", gap: 1 }}>
         {onClose && (

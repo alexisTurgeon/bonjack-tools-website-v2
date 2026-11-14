@@ -31,6 +31,9 @@ const layerSx = {
 const SplashGround = ({ url }: { url: string }) => {
   // The splash already faded in; it stays underneath while the next one fades in over it.
   const [settled, setSettled] = useState<string | undefined>(undefined);
+  // The fade starts once the new splash has loaded, so a slow download never blanks the ground.
+  const [loaded, setLoaded] = useState<string | undefined>(undefined);
+  const ready = loaded === url;
   return (
     <Box aria-hidden sx={{ position: "absolute", inset: 0, zIndex: 0, overflow: "hidden" }}>
       {settled && settled !== url && <Box component="img" src={settled} alt="" sx={layerSx} />}
@@ -39,10 +42,12 @@ const SplashGround = ({ url }: { url: string }) => {
         key={url}
         src={url}
         alt=""
+        onLoad={() => setLoaded(url)}
         onAnimationEnd={() => setSettled(url)}
         sx={{
           ...layerSx,
-          animation: `${fadeIn} ${motion.crossFade}ms ease-out both`,
+          opacity: ready ? 1 : 0,
+          animation: ready ? `${fadeIn} ${motion.crossFade}ms ease-out both` : "none",
           [REDUCED]: { animation: "none" },
         }}
       />
