@@ -41,7 +41,7 @@ const FeltScene = ({ children }: { children: ReactNode }) => (
           boxSizing: "border-box",
           maxWidth: sizes.content,
           mx: "auto",
-          px: { xs: 1.5, sm: 3 },
+          px: { xs: 1.5, sm: 2, lg: 3 },
           pt: { xs: 2, md: 2.5 },
           // Clear of the fixed footer (about 36px) with room to spare.
           pb: { xs: 9, md: 8 },

@@ -78,7 +78,7 @@ export const sizes = {
   tokenCompact: 72,
   seatHeight: 300,
   seatHeightCompact: 104,
-  seatMinWidth: 176,
+  seatMinWidth: 184,
   die: 112,
   dieWide: 104,
   dieCompact: 84,

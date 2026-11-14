@@ -39,13 +39,20 @@ const wideSx = {
   gridTemplateColumns: `repeat(${SEAT_COUNT}, minmax(0, 1fr)) ${sizes.trayWidth}px`,
 } as const;
 
-/** Narrower: the seats wrap under the tray; auto-fit leaves no empty track beside them. */
+/** Space the five seats need side by side, each wide enough for a whole stat note. */
+const FIVE_ACROSS = SEAT_COUNT * sizes.seatMinWidth + (SEAT_COUNT - 1) * 8;
+
+/**
+ * Narrower: the seats sit under the tray, five across when the mat's own width
+ * allows it (a container query, so a classic scrollbar is counted), otherwise
+ * three and two; one per row on phones.
+ */
 const seatsSx = {
   display: "grid",
   gap: 1,
-  gridTemplateColumns: {
-    xs: "minmax(0, 1fr)",
-    sm: `repeat(auto-fit, minmax(${sizes.seatMinWidth}px, 1fr))`,
+  gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(3, minmax(0, 1fr))" },
+  [`@container (min-width: ${FIVE_ACROSS}px)`]: {
+    gridTemplateColumns: `repeat(${SEAT_COUNT}, minmax(0, 1fr))`,
   },
 } as const;
 
@@ -62,7 +69,7 @@ const MatGrid = ({ tray, seats, label }: { tray: ReactNode; seats: ReactNode; la
     );
   }
   return (
-    <Box sx={{ display: "grid", gap: 1.5 }} {...busy}>
+    <Box sx={{ display: "grid", gap: 1.5, containerType: "inline-size" }} {...busy}>
       <div>{tray}</div>
       <Box sx={seatsSx}>{seats}</Box>
     </Box>
