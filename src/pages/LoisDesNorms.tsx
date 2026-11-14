@@ -24,6 +24,8 @@ const INITIAL_RETRY_MS = 1000;
 const MAX_RETRY_MS = 30_000;
 
 const initialState: LoisDesNormsState = {
+  lobbyId: "",
+  lobbyName: "",
   players: Array.from({ length: 5 }, emptyPlayer),
   rollCount: 0,
   gameInProgress: false,
@@ -48,6 +50,9 @@ const reducer = (state: LoisDesNormsState, message: Message): LoisDesNormsState 
       const newState = JSON.parse(message.content) as LoisDesNormsState;
       return {
         ...newState,
+        // Additive fields: an older server leaves them out.
+        lobbyId: newState.lobbyId ?? state.lobbyId,
+        lobbyName: newState.lobbyName ?? "",
         nextRollAt: Date.now() + (newState.nextRollTimer ?? 0),
         availablePlayers: { ...newState.availablePlayers, "": emptyDiscordPlayer() },
       };
