@@ -3,7 +3,7 @@ import FlagOutlined from "@mui/icons-material/FlagOutlined";
 import Countdown from "react-countdown";
 import Die from "./Die";
 import { highlightAnimation, REDUCED } from "./motion";
-import { colors, focusRing, line, motion, radii, sizes } from "./tokens";
+import { colors, focusRing, line, motion, radii, sizes, visuallyHidden } from "./tokens";
 
 interface Props {
   rollCount: number;
@@ -55,12 +55,10 @@ const CooldownTrack = ({ remainingMs, totalMs }: { remainingMs: number; totalMs:
           }}
         />
       </Box>
-      <Typography role="timer" sx={{ mt: 1, fontSize: "0.9375rem", color: colors.inkSoft }}>
-        Next roll in{" "}
-        <Box component="span" sx={{ color: colors.ink, fontWeight: 600, display: "inline-block", minWidth: "4ch" }}>
-          {clockOf(remainingMs)}
-        </Box>
-      </Typography>
+      {/* The die's caption shows the time; this is for screen readers. */}
+      <span role="timer" style={visuallyHidden}>
+        Next roll in {clockOf(remainingMs)}
+      </span>
     </Box>
   );
 };
@@ -69,6 +67,8 @@ const statusText = (gameInProgress: boolean, canRoll: boolean) => {
   if (canRoll) return gameInProgress ? "Ready to roll" : "The first roll starts the loi";
   return gameInProgress ? "Waiting for the server" : "Start is not available yet";
 };
+
+const WIDE = "@media (min-width: 1280px)";
 
 /** Roll die, cooldown track, and Finish and Cancel while a game runs. */
 const DieTray = (props: Props) => {
@@ -88,12 +88,14 @@ const DieTray = (props: Props) => {
         display: "flex",
         flexDirection: "row",
         alignItems: "center",
-        gap: { xs: 2, sm: 2.5 },
-        "@media (min-width: 1280px)": {
+        gap: { xs: 2, sm: 3 },
+        [WIDE]: {
           flexDirection: "column",
-          alignItems: "stretch",
+          justifyContent: "center",
           height: sizes.seatHeight,
-          gap: 2,
+          gap: 1.75,
+          px: 1.5,
+          textAlign: "center",
         },
       }}
     >
@@ -104,9 +106,14 @@ const DieTray = (props: Props) => {
         sx={{
           position: "relative",
           flex: "none",
-          alignSelf: "center",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 0.25,
           width: { xs: sizes.dieCompact, sm: sizes.die },
+          [WIDE]: { width: sizes.dieWide },
           p: 0.5,
+          pb: 0.75,
           borderRadius: `${radii.panel}px`,
           "&.Mui-focusVisible, &:focus-visible": { ...focusRing, outlineOffset: 2 },
           "& > svg": { transition: `transform ${motion.quick}ms ${motion.easeOut}` },
@@ -115,6 +122,24 @@ const DieTray = (props: Props) => {
         }}
       >
         <Die value={gameInProgress ? rollCount : undefined} dim={!canRoll} rollSeq={rollSeq} />
+        <Box
+          component="span"
+          sx={{
+            fontSize: "0.875rem",
+            fontWeight: 700,
+            letterSpacing: "0.08em",
+            lineHeight: 1.2,
+            minWidth: "5ch",
+            fontVariantNumeric: "tabular-nums",
+            color: canRoll ? colors.amber : colors.inkSoft,
+          }}
+        >
+          {coolingDown ? (
+            <Countdown key={nextRollAt} date={nextRollAt} renderer={({ total }) => clockOf(total)} />
+          ) : (
+            label.toUpperCase()
+          )}
+        </Box>
         {rollSeq > 0 && (
           // Reduced motion: a short ink ring instead of the tumble.
           <Box
@@ -139,7 +164,7 @@ const DieTray = (props: Props) => {
           display: "flex",
           flexDirection: "column",
           gap: 1.5,
-          "@media (min-width: 1280px)": { flex: 1, justifyContent: "space-between" },
+          [WIDE]: { flex: "none", width: "100%", alignItems: "center", gap: 1.25 },
         }}
       >
         {coolingDown ? (
@@ -149,7 +174,14 @@ const DieTray = (props: Props) => {
             renderer={({ total }) => <CooldownTrack remainingMs={total} totalMs={cooldownTotalMs} />}
           />
         ) : (
-          <Typography sx={{ fontSize: "0.9375rem", color: canRoll ? colors.ink : colors.inkSoft, fontWeight: canRoll ? 600 : 400 }}>
+          <Typography
+            sx={{
+              fontSize: "0.9375rem",
+              lineHeight: 1.3,
+              color: canRoll ? colors.ink : colors.inkSoft,
+              fontWeight: canRoll ? 600 : 400,
+            }}
+          >
             {statusText(gameInProgress, canRoll)}
           </Typography>
         )}
@@ -159,13 +191,13 @@ const DieTray = (props: Props) => {
               display: "flex",
               gap: 1,
               flexWrap: "wrap",
-              "@media (min-width: 1280px)": { flexDirection: "column", flexWrap: "nowrap" },
+              [WIDE]: { flexDirection: "column", alignItems: "center", gap: 0.5 },
             }}
           >
-            <Button variant="outlined" startIcon={<FlagOutlined />} onClick={props.reset}>
+            <Button variant="outlined" size="small" startIcon={<FlagOutlined />} onClick={props.reset}>
               Finish
             </Button>
-            <Button variant="text" onClick={props.cancel}>
+            <Button variant="text" size="small" onClick={props.cancel}>
               Cancel
             </Button>
           </Box>

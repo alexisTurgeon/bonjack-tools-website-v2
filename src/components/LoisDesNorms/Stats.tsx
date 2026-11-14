@@ -41,14 +41,15 @@ const Stats = (props: { availablePlayers: AvailablePlayers }) => {
     <Box sx={{ overflowX: "auto" }}>
       <Box
         component="table"
-        sx={{ width: "100%", maxWidth: 820, borderCollapse: "collapse", tableLayout: "fixed", fontSize: "0.9375rem" }}
+        sx={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed", fontSize: "0.9375rem" }}
       >
         <caption style={visuallyHidden}>Player stats: games won, total rolls and win rate</caption>
         <colgroup>
           <col />
-          <Box component="col" sx={{ width: { xs: 52, sm: 96 } }} />
-          <Box component="col" sx={{ width: { xs: 48, sm: 96 } }} />
-          <Box component="col" sx={{ width: { xs: 72, sm: 120 } }} />
+          {/* The figures share the panel's width with the names: no dead band at desktop width. */}
+          <Box component="col" sx={{ width: { xs: 52, sm: "18%" } }} />
+          <Box component="col" sx={{ width: { xs: 48, sm: "18%" } }} />
+          <Box component="col" sx={{ width: { xs: 72, sm: "22%" } }} />
         </colgroup>
         <thead>
           <tr>

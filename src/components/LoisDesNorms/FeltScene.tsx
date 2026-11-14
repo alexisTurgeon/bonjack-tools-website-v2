@@ -3,23 +3,17 @@ import { Box, GlobalStyles } from "@mui/material";
 import { ThemeProvider } from "@mui/material/styles";
 import { tableNap } from "./felt";
 import { ldnTheme } from "./theme";
-import { colors, line, sizes } from "./tokens";
+import { colors, sizes } from "./tokens";
 
 /**
- * While these pages are mounted: the site's fixed footer gets the table's
- * ground and ink text, and #root drops its footer gap (the scene keeps its
- * own, at least the footer's height).
+ * While these pages are mounted: the site's fixed footer keeps its look but
+ * gets the table's ground and ink text so it stays legible over the felt, and
+ * #root drops its footer gap (the scene keeps its own, at least the footer's height).
  */
 const footerStyles = {
   "#root": { paddingBottom: 0 },
-  ".footer": {
-    backgroundColor: colors.table,
-    color: colors.ink,
-    borderTop: line(colors.inkRule),
-    padding: "6px 16px",
-    boxSizing: "border-box",
-  },
-  ".footer .MuiTypography-root": { color: colors.ink, fontSize: "0.875rem" },
+  ".footer": { backgroundColor: colors.table, color: colors.ink },
+  ".footer .MuiTypography-root": { color: colors.ink },
 } as const;
 
 /** The table: full-bleed felt under the site header, with the pages' own theme. */

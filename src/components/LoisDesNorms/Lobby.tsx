@@ -42,7 +42,7 @@ const wideSx = {
 /** Narrower: the seats wrap under the tray; auto-fit leaves no empty track beside them. */
 const seatsSx = {
   display: "grid",
-  gap: 1.5,
+  gap: 1,
   gridTemplateColumns: {
     xs: "minmax(0, 1fr)",
     sm: `repeat(auto-fit, minmax(${sizes.seatMinWidth}px, 1fr))`,

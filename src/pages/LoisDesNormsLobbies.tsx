@@ -27,7 +27,8 @@ const canClose = (lobby: LobbySummary) => !lobby.isDefault && !lobby.gameInProgr
 
 const gridSx = {
   display: "grid",
-  gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 340px), 1fr))",
+  // Wide enough for three chairs a side with whole stat notes.
+  gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 520px), 1fr))",
   columnGap: { xs: 2, md: 4 },
   rowGap: { xs: 4, md: 5 },
 } as const;

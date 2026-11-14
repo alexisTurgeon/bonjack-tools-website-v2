@@ -1,4 +1,4 @@
-import { Box, Button, Typography } from "@mui/material";
+import { Box, Button, Typography, useMediaQuery } from "@mui/material";
 import CasinoOutlined from "@mui/icons-material/CasinoOutlined";
 import VisibilityOutlined from "@mui/icons-material/VisibilityOutlined";
 import { Link as RouterLink } from "react-router-dom";
@@ -6,6 +6,7 @@ import { LobbySummary } from "../../api/loisDesNorms";
 import { lobbyPath, SEAT_COUNT } from "../../helpers/loisDesNorms";
 import Nameplate from "./Nameplate";
 import PlayMat from "./PlayMat";
+import { usePlayerStatNote } from "./usePlayerStatNote";
 import { colors, line, radii } from "./tokens";
 
 interface Props {
@@ -44,8 +45,18 @@ export const StatusBadge = ({ lobby }: { lobby: Pick<LobbySummary, "gameInProgre
 
 type Seat = { id: string; name?: string | null } | undefined;
 
+/** One chair: the same nameplate as everywhere, with the player's stat note. */
+const Chair = ({ player }: { player: Seat }) => {
+  const note = usePlayerStatNote(player?.id);
+  return player ? (
+    <Nameplate size="sm" name={player.name || player.id} note={note} reserveNote />
+  ) : (
+    <Nameplate size="sm" empty name="Open seat" reserveNote />
+  );
+};
+
 /** A row of chairs along one side of the table. */
-const SeatRow = ({ seats, offset, side }: { seats: Seat[]; offset: number; side: "top" | "bottom" }) => (
+const SeatRow = ({ seats, offset, side, perRow }: { seats: Seat[]; offset: number; side: "top" | "bottom"; perRow: 2 | 3 }) => (
   <Box
     component="ul"
     sx={{
@@ -53,28 +64,34 @@ const SeatRow = ({ seats, offset, side }: { seats: Seat[]; offset: number; side:
       m: 0,
       px: 1.5,
       display: "grid",
-      // Three chairs on the near side, two centred on the far side.
-      gridTemplateColumns: "repeat(6, minmax(0, 1fr))",
+      // Chairs on both long sides of the table; a short row is centred.
+      gridTemplateColumns: `repeat(${perRow * 2}, minmax(0, 1fr))`,
       columnGap: 1,
+      rowGap: 1,
       position: "relative",
       zIndex: 1,
       // The discs sit right against the table's edge.
-      ...(side === "top" ? { mb: "-10px" } : { mt: "-10px" }),
+      ...(side === "top" ? { mb: "-4px" } : { mt: "-4px" }),
     }}
   >
-    {seats.map((player, i) => (
-      <Box
-        component="li"
-        key={player?.id || `open-${offset + i}`}
-        sx={{ gridColumn: side === "top" ? "span 2" : `${2 + i * 2} / span 2`, minWidth: 0 }}
-      >
-        {player ? (
-          <Nameplate size="sm" name={player.name || player.id} />
-        ) : (
-          <Nameplate size="sm" empty name="Open seat" />
-        )}
-      </Box>
-    ))}
+    {seats.map((player, i) => {
+      // Centre a row with fewer chairs than columns.
+      const lastRowStart = seats.length - (seats.length % perRow || perRow);
+      const lastRowCount = seats.length - lastRowStart;
+      const shift = i >= lastRowStart && lastRowCount < perRow ? perRow - lastRowCount : 0;
+      return (
+        <Box
+          component="li"
+          key={player?.id || `open-${offset + i}`}
+          sx={{
+            gridColumn: shift && i === lastRowStart ? `${1 + shift} / span 2` : "span 2",
+            minWidth: 0,
+          }}
+        >
+          <Chair player={player} />
+        </Box>
+      );
+    })}
   </Box>
 );
 
@@ -84,6 +101,10 @@ const LobbyCard = ({ lobby, onClose, closing }: Props) => {
   const seated = lobby.players ?? [];
   const seats = Array.from({ length: SEAT_COUNT }, (_, i) => seated[i]);
   const nameId = `lobby-${lobby.id}-name`;
+  // Phones: two chairs per row, so each nameplate keeps its stat note whole.
+  const roomy = useMediaQuery("(min-width: 600px)", { noSsr: true });
+  const perRow = roomy ? 3 : 2;
+  const near = roomy ? 3 : 2;
 
   return (
     <Box
@@ -95,7 +116,7 @@ const LobbyCard = ({ lobby, onClose, closing }: Props) => {
       <span id={`${nameId}-seats`} hidden>
         {`${seated.length} of ${SEAT_COUNT} seats taken`}
       </span>
-      <SeatRow side="top" seats={seats.slice(0, 3)} offset={0} />
+      <SeatRow side="top" seats={seats.slice(0, near)} offset={0} perRow={perRow} />
       <PlayMat small sx={{ minHeight: 112, display: "flex", flexDirection: "column", gap: 1.25, py: 2.25 }}>
         <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1.5 }}>
           <Typography id={nameId} variant="h2" component="h2" sx={{ overflowWrap: "anywhere", minWidth: 0 }}>
@@ -110,7 +131,7 @@ const LobbyCard = ({ lobby, onClose, closing }: Props) => {
           </span>
         </Box>
       </PlayMat>
-      <SeatRow side="bottom" seats={seats.slice(3)} offset={3} />
+      <SeatRow side="bottom" seats={seats.slice(near)} offset={near} perRow={perRow} />
       <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 0.5 }}>
         {onClose && (
           <Button variant="text" onClick={onClose} disabled={closing} aria-label={`Close ${lobby.name}`}>

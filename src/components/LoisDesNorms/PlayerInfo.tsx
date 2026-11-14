@@ -39,6 +39,7 @@ const PlayerInfo = (props: PlayerInfoProperties) => {
   return (
     <Box
       sx={{
+        position: "relative",
         border: line(),
         borderRadius: `${radii.panel}px`,
         p: 1.25,
@@ -46,42 +47,64 @@ const PlayerInfo = (props: PlayerInfoProperties) => {
         display: "grid",
         // Same height empty, seated or rolled: the mat never reflows on a roll.
         height: { xs: sizes.seatHeightCompact, sm: sizes.seatHeight },
-        columnGap: 1.5,
-        rowGap: { xs: 0.5, sm: 0 },
-        gridTemplateColumns: { xs: `${sizes.tokenCompact}px minmax(0, 1fr)`, sm: "minmax(0, 1fr)" },
-        gridTemplateRows: { xs: "22px auto 1fr", sm: "26px 1fr 26px auto" },
-        // Seat number and role chip share the top corners at every width.
+        columnGap: 1.25,
+        gridTemplateColumns: {
+          xs: `${sizes.tokenCompact}px minmax(0, 1fr) auto`,
+          sm: "minmax(0, 1fr) auto",
+        },
+        gridTemplateRows: { xs: "auto 1fr", sm: "26px 1fr 26px auto" },
+        // Desktop: seat number and role chip in the top corners. Phone: the role
+        // chip rides on the champion line and the seat number is for screen readers.
         gridTemplateAreas: {
-          xs: '"label label" "token champ" "token pick"',
-          sm: '"label" "token" "champ" "pick"',
+          xs: '"token champ chip" "token pick pick"',
+          sm: '"label chip" "token token" "champ champ" "pick pick"',
         },
         alignItems: "center",
       }}
     >
-      <Box sx={{ gridArea: "label", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1, minHeight: 22 }}>
-        <Typography id={labelId} component="span" sx={{ display: "block", fontSize: "0.8125rem", fontWeight: 600, color: colors.inkSoft }}>
-          Seat {index + 1}
-        </Typography>
-        {rolled && (
-          <Box
-            key={flipKey}
-            component="span"
-            sx={{
-              border: line(roleColors[role]),
-              color: roleColors[role],
-              borderRadius: `${radii.badge}px`,
-              px: 0.75,
-              fontSize: "0.75rem",
-              fontWeight: 700,
-              letterSpacing: "0.05em",
-              lineHeight: "18px",
-              ...revealSx(flipKey, flipDelay),
-            }}
-          >
-            {role}
-          </Box>
-        )}
-      </Box>
+      <Typography
+        id={labelId}
+        component="span"
+        sx={{
+          gridArea: { sm: "label" },
+          fontSize: "0.8125rem",
+          fontWeight: 600,
+          color: colors.inkSoft,
+          // Phones: off screen, still the picker's accessible label.
+          "@media (max-width: 599.95px)": {
+            position: "absolute",
+            width: 1,
+            height: 1,
+            m: "-1px",
+            overflow: "hidden",
+            clip: "rect(0 0 0 0)",
+            whiteSpace: "nowrap",
+          },
+        }}
+      >
+        Seat {index + 1}
+      </Typography>
+      {rolled && (
+        <Box
+          key={flipKey}
+          component="span"
+          sx={{
+            gridArea: "chip",
+            justifySelf: "end",
+            border: line(roleColors[role]),
+            color: roleColors[role],
+            borderRadius: `${radii.badge}px`,
+            px: 0.75,
+            fontSize: "0.875rem",
+            fontWeight: 700,
+            letterSpacing: "0.04em",
+            lineHeight: "20px",
+            ...revealSx(flipKey, flipDelay),
+          }}
+        >
+          {role}
+        </Box>
+      )}
 
       <Box sx={{ gridArea: "token", display: "grid", placeItems: "center" }}>
         <Token
@@ -110,7 +133,7 @@ const PlayerInfo = (props: PlayerInfoProperties) => {
         {rolled ? champion.name : "\u00a0"}
       </Typography>
 
-      <Box sx={{ gridArea: "pick", minWidth: 0, borderTop: { sm: line(colors.inkRule) }, pt: { sm: 1 }, mx: -0.5 }}>
+      <Box sx={{ gridArea: "pick", minWidth: 0, borderTop: { sm: line(colors.inkRule) }, pt: { sm: 1 }, mx: { xs: -0.5, sm: -1.25 } }}>
         <Select
           labelId={labelId}
           id={`seat-${index + 1}-select`}
@@ -141,7 +164,7 @@ const PlayerInfo = (props: PlayerInfoProperties) => {
             "& .MuiSelect-select": {
               borderRadius: `${radii.control}px`,
               py: 0.75,
-              pl: 0.25,
+              pl: { xs: 0.25, sm: 0.75 },
               // The chevron sits beside the name line only; the stat note runs under it.
               pr: "4px !important",
               transition: `background-color ${motion.quick}ms`,
