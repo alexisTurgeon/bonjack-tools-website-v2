@@ -1,7 +1,8 @@
 import { Box, InputBase, MenuItem, Select, SelectChangeEvent, Typography } from "@mui/material";
 import KeyboardArrowDownRounded from "@mui/icons-material/KeyboardArrowDownRounded";
-import { AvailablePlayers, Player, statNote } from "../../helpers/loisDesNorms";
+import { AvailablePlayer, AvailablePlayers, Player, PlayerStats } from "../../helpers/loisDesNorms";
 import Nameplate from "./Nameplate";
+import { usePlayerStatNote } from "./playerStats";
 import Token from "./Token";
 import { fadeIn, REDUCED } from "./motion";
 import { colors, focusRing, line, motion, radii, roleColors, sizes } from "./tokens";
@@ -18,6 +19,28 @@ export interface PlayerInfoProperties {
   /** Changes when a player is seated here. */
   dropKey: number;
 }
+
+/** The seated player's nameplate in the closed picker, with live stats. */
+const SeatedNameplate = ({ id, name, placeholder }: { id: string; name: string | null; placeholder?: PlayerStats | null }) => {
+  const note = usePlayerStatNote(id, placeholder);
+  return <Nameplate name={name ?? "—"} initialFrom={name} note={note} reserveNote reserveEnd={CHEVRON} />;
+};
+
+/** One option of the picker, with live stats and, for a player seated elsewhere, where and what picking does. */
+const OptionNameplate = ({ id, player }: { id: string; player: AvailablePlayer }) => {
+  const stats = usePlayerStatNote(id, player.stats);
+  const name = player.name ?? "—";
+  const elsewhere = player.seatedIn;
+  if (!elsewhere) return <Nameplate name={name} initialFrom={player.name ?? null} note={stats} />;
+  const hint = elsewhere.gameInProgress ? "Playing there" : "Picking them moves them here";
+  return (
+    <Nameplate
+      name={`${name} — in ${elsewhere.name}`}
+      initialFrom={player.name ?? null}
+      note={stats ? `${hint} · ${stats}` : hint}
+    />
+  );
+};
 
 /** Chevron size; the name line leaves this much room for it. */
 const CHEVRON = 20;
@@ -148,14 +171,11 @@ const PlayerInfo = (props: PlayerInfoProperties) => {
           renderValue={(id) => {
             if (id === "") return <Nameplate empty name="Open seat" reserveNote reserveEnd={CHEVRON} />;
             const player = availablePlayers[id];
-            const name = player?.name ?? seat.player.name ?? "—";
             return (
-              <Nameplate
-                name={name}
-                initialFrom={player?.name ?? seat.player.name ?? null}
-                note={statNote(player?.stats)}
-                reserveNote
-                reserveEnd={CHEVRON}
+              <SeatedNameplate
+                id={id}
+                name={player?.name ?? seat.player.name ?? null}
+                placeholder={player?.stats ?? seat.player.stats}
               />
             );
           }}
@@ -181,25 +201,16 @@ const PlayerInfo = (props: PlayerInfoProperties) => {
           {Object.entries(availablePlayers)
             .filter(([id]) => id !== "")
             .map(([id, player]) => {
-              const name = player.name ?? "—";
               const elsewhere = player.seatedIn;
-              const stats = statNote(player.stats);
-              if (!elsewhere) {
-                return (
-                  <MenuItem key={id} value={id}>
-                    <Nameplate name={name} initialFrom={player.name ?? null} note={stats} />
-                  </MenuItem>
-                );
-              }
               // Seated in another lobby: a game there locks them, otherwise picking moves them.
-              const hint = elsewhere.gameInProgress ? "Playing there" : "Picking them moves them here";
               return (
-                <MenuItem key={id} value={id} disabled={elsewhere.gameInProgress} sx={{ whiteSpace: "normal" }}>
-                  <Nameplate
-                    name={`${name} — in ${elsewhere.name}`}
-                    initialFrom={player.name ?? null}
-                    note={stats ? `${hint} · ${stats}` : hint}
-                  />
+                <MenuItem
+                  key={id}
+                  value={id}
+                  disabled={elsewhere?.gameInProgress ?? false}
+                  sx={elsewhere ? { whiteSpace: "normal" } : undefined}
+                >
+                  <OptionNameplate id={id} player={player} />
                 </MenuItem>
               );
             })}

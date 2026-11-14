@@ -1,7 +1,9 @@
 import { Box, Link, Typography } from "@mui/material";
+import { useQueries } from "@tanstack/react-query";
 import { Link as RouterLink } from "react-router-dom";
-import { AvailablePlayers, statNote, winRate } from "../../helpers/loisDesNorms";
+import { AvailablePlayers, PlayerStats, statNote, winRate } from "../../helpers/loisDesNorms";
 import Nameplate from "./Nameplate";
+import { playerStatsQuery, statsOf } from "./playerStats";
 import { colors, fonts, line, visuallyHidden } from "./tokens";
 
 const NUMBER_COLUMNS = ["Games", "Rolls", "Win rate"] as const;
@@ -20,9 +22,14 @@ const WinRate = ({ value }: { value: number }) => (
 
 /** Scoresheet of the players in the voice channel: games, rolls and win rate. */
 const Stats = (props: { availablePlayers: AvailablePlayers }) => {
-  const rows = Object.entries(props.availablePlayers)
-    .filter(([, p]) => p && p.name && p.stats)
-    .map(([id, p]) => ({ id, name: p.name ?? "", stats: p.stats! }));
+  // Live stats per player; the lobby state's own (stale) stats are only placeholders.
+  const players = Object.entries(props.availablePlayers).filter(([id, p]) => id !== "" && p && p.name);
+  const results = useQueries({
+    queries: players.map(([id, p]) => playerStatsQuery(id, p.stats)),
+  });
+  const rows = players
+    .map(([id, p], i) => ({ id, name: p.name ?? "", stats: statsOf(results[i], p.stats) }))
+    .filter((row): row is { id: string; name: string; stats: PlayerStats } => row.stats !== undefined);
 
   if (rows.length === 0) {
     return (

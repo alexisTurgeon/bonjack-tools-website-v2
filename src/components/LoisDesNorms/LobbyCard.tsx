@@ -6,7 +6,7 @@ import { LobbySummary } from "../../api/loisDesNorms";
 import { lobbyPath, SEAT_COUNT } from "../../helpers/loisDesNorms";
 import Nameplate from "./Nameplate";
 import PlayMat from "./PlayMat";
-import { usePlayerStatNote } from "./usePlayerStatNote";
+import { usePlayerStatNote } from "./playerStats";
 import { colors, line, radii } from "./tokens";
 
 interface Props {

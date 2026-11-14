@@ -2,6 +2,7 @@ import { useEffect, useReducer, useRef, useCallback, useState } from "react";
 import { Alert, Box, Button, Link, SelectChangeEvent, Skeleton, Typography } from "@mui/material";
 import ArrowBackRounded from "@mui/icons-material/ArrowBackRounded";
 import HeadsetMicOutlined from "@mui/icons-material/HeadsetMicOutlined";
+import { useQueryClient } from "@tanstack/react-query";
 import { Link as RouterLink, useParams } from "react-router-dom";
 import {
   DEFAULT_LOBBY_ID,
@@ -20,6 +21,7 @@ import Lobby, { LobbySkeleton } from "../components/LoisDesNorms/Lobby";
 import FeltScene from "../components/LoisDesNorms/FeltScene";
 import PlayMat from "../components/LoisDesNorms/PlayMat";
 import { colors, visuallyHidden } from "../components/LoisDesNorms/tokens";
+import { PLAYER_STATS_KEY } from "../components/LoisDesNorms/playerStats";
 
 type Message = { action: MessageActions; content: string };
 
@@ -36,6 +38,8 @@ interface PageState extends LoisDesNormsState {
   seatDrops: number[];
   /** Polite announcement of the last roll. */
   announcement: string;
+  /** Bumped when a game ends or another one starts: player stats must be refetched. */
+  gameEndSeq: number;
 }
 
 const initialState = (lobbyId: string): PageState => ({
@@ -56,6 +60,7 @@ const initialState = (lobbyId: string): PageState => ({
   rollSeq: 0,
   seatDrops: Array.from({ length: SEAT_COUNT }, () => 0),
   announcement: "",
+  gameEndSeq: 0,
 });
 
 /** Bump a seat's counter when a player newly sits there. Nothing on the first state. */
@@ -97,6 +102,10 @@ const reducer = (state: PageState, message: Message): PageState => {
         hadState &&
         newState.gameInProgress &&
         (newState.gameId !== state.gameId || newState.rollCount > state.rollCount);
+      // Finish or Cancel (in game -> not), or a different game: stats have moved on.
+      const gameEnded =
+        hadState &&
+        ((state.gameInProgress && !newState.gameInProgress) || newState.gameId !== state.gameId);
       const merged: LoisDesNormsState = {
         ...newState,
         // Additive fields: an older server leaves them out.
@@ -115,6 +124,7 @@ const reducer = (state: PageState, message: Message): PageState => {
         // A roll replaces every seat's token; the flip shows it, not a drop.
         seatDrops: rolled ? state.seatDrops : nextSeatDrops(state, merged.players, hadState),
         announcement: rolled ? rollAnnouncement(merged) : state.announcement,
+        gameEndSeq: gameEnded ? state.gameEndSeq + 1 : state.gameEndSeq,
       };
     }
     default:
@@ -146,6 +156,12 @@ const headlineSx = { fontSize: { xs: "2.125rem", md: "2.75rem" }, overflowWrap: 
 
 const LoisDesNormsLobby = ({ lobbyId }: { lobbyId: string }) => {
   const [state, dispatch] = useReducer(reducer, lobbyId, initialState);
+  const queryClient = useQueryClient();
+
+  // The server records a game's stats when it ends; refetch every nameplate's.
+  useEffect(() => {
+    if (state.gameEndSeq > 0) void queryClient.invalidateQueries({ queryKey: PLAYER_STATS_KEY });
+  }, [state.gameEndSeq, queryClient]);
   const [connection, setConnection] = useState<ConnectionStatus>({ kind: "connecting", attempt: 1 });
   const wsRef = useRef<WebSocket | null>(null);
 

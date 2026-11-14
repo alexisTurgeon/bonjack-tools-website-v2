@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Alert, Box, Button, Skeleton, Typography } from "@mui/material";
 import AddRounded from "@mui/icons-material/AddRounded";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -11,6 +11,7 @@ import FeltScene from "../components/LoisDesNorms/FeltScene";
 import LobbyCard from "../components/LoisDesNorms/LobbyCard";
 import NewLobbyDialog from "../components/LoisDesNorms/NewLobbyDialog";
 import { colors, dashedLine, line, radii } from "../components/LoisDesNorms/tokens";
+import { PLAYER_STATS_KEY } from "../components/LoisDesNorms/playerStats";
 
 const POLL_INTERVAL_MS = 3000;
 
@@ -70,6 +71,16 @@ const LoisDesNormsLobbies = () => {
     onSettled: () => queryClient.invalidateQueries({ queryKey: LOBBIES_QUERY_KEY }),
   });
   const count = query.data?.length;
+
+  // When a polled table's game ends, its players' stats have changed: refetch them.
+  const wasInGame = useRef(new Map<string, boolean>());
+  useEffect(() => {
+    if (!query.data) return;
+    const before = wasInGame.current;
+    const ended = query.data.some((lobby) => before.get(lobby.id) === true && !lobby.gameInProgress);
+    wasInGame.current = new Map(query.data.map((lobby) => [lobby.id, lobby.gameInProgress]));
+    if (ended) void queryClient.invalidateQueries({ queryKey: PLAYER_STATS_KEY });
+  }, [query.data, queryClient]);
 
   return (
     <FeltScene>
