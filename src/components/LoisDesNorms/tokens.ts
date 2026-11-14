@@ -43,6 +43,9 @@ export const goldFrame = {
 /** The one bevel: a dark-gold inner line inside the frame and a light catch along the top edge. */
 export const bevel = `inset 0 0 0 1px rgba(120, 90, 40, 0.65), inset 0 2px 0 rgba(240, 230, 210, 0.2)`;
 
+/** The fill inside every framed piece: navy lit from the top, so the bevel reads on small frames too. */
+export const litFill = `linear-gradient(180deg, ${colors.navyRaised}, ${colors.navy})`;
+
 export const fonts = {
   /** Tracked capital serif: names, headings, the timer. */
   display: '"Cinzel Variable", "Times New Roman", serif',
@@ -76,8 +79,8 @@ export const sizes = {
   ringCompact: 220,
   thumb: 48,
   benchSquare: 34,
-  /** Phone width: ten squares fit on one row. */
-  benchSquareCompact: 30,
+  /** Phone width: a comfortable tap target, five per row. */
+  benchSquareCompact: 44,
   disc: 30,
   discSmall: 26,
   leftColumn: 380,

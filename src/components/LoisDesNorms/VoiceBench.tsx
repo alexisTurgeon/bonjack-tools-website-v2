@@ -2,7 +2,7 @@ import { Box, Tooltip } from "@mui/material";
 import LockRounded from "@mui/icons-material/LockRounded";
 import { AvailablePlayers, initialOf, Player } from "../../helpers/loisDesNorms";
 import { BracketTitle } from "./Frames";
-import { colors, fonts, goldFrame, sizes, visuallyHidden } from "./tokens";
+import { bevel, colors, fonts, goldFrame, litFill, sizes, visuallyHidden } from "./tokens";
 
 interface Props {
   availablePlayers: AvailablePlayers;
@@ -20,7 +20,20 @@ const VoiceBench = ({ availablePlayers, players, channel }: Props) => {
       <BracketTitle id="voice-bench-title">In voice{channel ? ` · ${channel}` : ""}</BracketTitle>
       <Box
         component="ul"
-        sx={{ listStyle: "none", m: 0, mt: 1, p: 0, display: "flex", flexWrap: "wrap", justifyContent: "center", gap: { xs: 0.5, sm: 0.75 } }}
+        sx={{
+          listStyle: "none",
+          m: 0,
+          mt: 1,
+          p: 0,
+          display: "flex",
+          flexWrap: "wrap",
+          justifyContent: "center",
+          gap: 1,
+          // Phones: five 44px squares per row (a 5x2 grid for ten players), never an orphan on a crowded row.
+          mx: "auto",
+          maxWidth: { xs: sizes.benchSquareCompact * 5 + 8 * 4, sm: "none" },
+          columnGap: { sm: 0.75 },
+        }}
       >
         {pool.length === 0 && (
           <Box component="li" sx={{ color: colors.muted, fontSize: "0.875rem" }}>
@@ -52,7 +65,9 @@ const VoiceBench = ({ availablePlayers, players, channel }: Props) => {
                   fontFamily: fonts.display,
                   fontWeight: 700,
                   fontSize: "0.9375rem",
-                  backgroundColor: colors.void,
+                  backgroundColor: colors.navy,
+                  backgroundImage: litFill,
+                  boxShadow: bevel,
                   color: here ? colors.cream : colors.goldText,
                   ...(here ? goldFrame : { border: `1px solid ${colors.goldDark}` }),
                   opacity: elsewhere && !here ? 0.45 : 1,

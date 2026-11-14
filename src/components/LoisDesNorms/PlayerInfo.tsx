@@ -5,7 +5,7 @@ import { ROLE_IMAGES, squareUrl } from "./champions";
 import Nameplate from "./Nameplate";
 import { usePlayerStatNote } from "./playerStats";
 import { highlightAnimation, REDUCED, ringPulse, swapIn } from "./motion";
-import { bevel, caps, colors, focusRing, FRAME, goldFrame, motion, SHORT, sizes, visuallyHidden } from "./tokens";
+import { bevel, caps, colors, focusRing, FRAME, goldFrame, litFill, motion, SHORT, sizes, visuallyHidden } from "./tokens";
 
 export interface PlayerInfoProperties {
   index: number;
@@ -94,7 +94,8 @@ const PlayerInfo = (props: PlayerInfoProperties) => {
           height: sizes.roleFrame,
           ...goldFrame,
           boxShadow: bevel,
-          backgroundColor: colors.void,
+          backgroundColor: colors.navy,
+          backgroundImage: litFill,
           display: "grid",
           placeItems: "center",
           animation: animate ? `${swapIn} ${motion.swap}ms ${motion.easeOut} ${swapDelay}ms both` : "none",

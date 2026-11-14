@@ -2,7 +2,7 @@ import "@fontsource-variable/cinzel";
 import "@fontsource-variable/cormorant-garamond/wght-italic.css";
 import "@fontsource-variable/jetbrains-mono";
 import { createTheme } from "@mui/material/styles";
-import { bevel, colors, focusRing, fonts, FRAME, goldFrame, motion } from "./tokens";
+import { bevel, colors, focusRing, fonts, FRAME, goldFrame, litFill, motion } from "./tokens";
 
 const focusVisible = { "&.Mui-focusVisible, &:focus-visible": focusRing };
 
@@ -58,7 +58,7 @@ export const ldnTheme = createTheme({
           ...goldFrame,
           backgroundColor: colors.navy,
           // A slight vertical fill, lit from the top like the client's buttons.
-          backgroundImage: `linear-gradient(180deg, ${colors.navyRaised}, ${colors.navy})`,
+          backgroundImage: litFill,
           color: colors.goldText,
           boxShadow: bevel,
           "&:hover": {
@@ -83,9 +83,16 @@ export const ldnTheme = createTheme({
         outlined: {
           border: `${FRAME}px solid ${colors.goldDark}`,
           color: colors.cream,
-          backgroundColor: "rgba(1, 10, 19, 0.6)",
-          "&:hover": { border: `${FRAME}px solid ${colors.gold}`, backgroundColor: colors.navy },
-          "&.Mui-disabled": { border: `${FRAME}px solid rgba(120, 90, 40, 0.4)`, color: colors.muted },
+          backgroundColor: colors.navy,
+          backgroundImage: litFill,
+          boxShadow: bevel,
+          "&:hover": { border: `${FRAME}px solid ${colors.gold}`, backgroundColor: colors.navyRaised, boxShadow: bevel },
+          "&.Mui-disabled": {
+            border: `${FRAME}px solid rgba(120, 90, 40, 0.4)`,
+            color: colors.muted,
+            backgroundImage: "none",
+            backgroundColor: colors.void,
+          },
         },
         text: {
           color: colors.muted,
